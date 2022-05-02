@@ -1,0 +1,309 @@
+\newpage
+\appendix
+\section{Appendix} \label{appendix}
+%
+%%\begin{figure}[h]
+%%	\includegraphics[width=0.8\textwidth]{bilder/ROC-multiclass.png}
+%%	\caption{Example for a ROC-Curve obtained during evaluation. The numbers in the legend are the \textit{SNOMED} codes for the classes. Micro and Macro are the averages along the classes.}
+%%	\label{fig:roc-example}
+%%	\centering
+%%\end{figure}
+%
+%\subsection{Baseline Results}
+%\begin{figure}
+%	\captionof{table}{Baseline F1 scores}
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{"/home/julian/Downloads/Github/contrastive-predictive-coding/models/25_06_21-16-test|bl_FCN+bl_MLP+bl_TCN_block+bl_TCN_down+bl_TCN_flatten+bl_TCN_last+bl_alex_v2+bl_cnn_v0+bl_cnn_v0_1+bl_cnn_v0_2+bl_cnn_v0_3+bl_cnn_v1+bl_cnn_v14+bl_cnn_v15+bl_cnn_v2+bl_cnn_v3+bl_cnn_v4+bl_cnn_v5+bl_cnn_v6+bl_cnn_v7+bl_cnn_v8+bl_cnn_v9+/f1-scores-avg-dataloader0.tex"}
+%		\caption{Models trained with class weights in the loss function.}
+%		\label{tbl:f1scores-avg-bl-class}	
+%	\end{subfigure}%
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{"/home/julian/Downloads/Github/contrastive-predictive-coding/models/26_06_21-15-test|(2x)bl_MLP+bl_FCN+bl_TCN_block+bl_TCN_down+bl_TCN_flatten+bl_TCN_last+bl_alex_v2+bl_cnn_v0+bl_cnn_v0_1+bl_cnn_v0_2+bl_cnn_v0_3+bl_cnn_v1+bl_cnn_v14+bl_cnn_v15+bl_cnn_v2+bl_cnn_v3+bl_cnn_v4+bl_cnn_v5+bl_cnn_v6+bl_cnn_v7+bl_cnn_v8+bl_cnn/f1-scores-avg-dataloader0.tex"}
+%		\caption{Models trained without class weights in the loss function.}	
+%		\label{tbl:f1scores-avg-bl-noclass}
+%	\end{subfigure}
+%\end{figure}
+%\begin{figure}
+%	\captionof{table}{Baseline Precision scores}
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{/home/julian/Downloads/Github/contrastive-predictive-coding/models/25_06_21-16-test|bl_FCN+bl_MLP+bl_TCN_block+bl_TCN_down+bl_TCN_flatten+bl_TCN_last+bl_alex_v2+bl_cnn_v0+bl_cnn_v0_1+bl_cnn_v0_2+bl_cnn_v0_3+bl_cnn_v1+bl_cnn_v14+bl_cnn_v15+bl_cnn_v2+bl_cnn_v3+bl_cnn_v4+bl_cnn_v5+bl_cnn_v6+bl_cnn_v7+bl_cnn_v8+bl_cnn_v9+/precision-scores-avg-dataloader0.tex}
+%		\caption{Models trained with class weights in the loss function.}
+%		\label{tbl:precscores-avg-bl-class}	
+%	\end{subfigure}%
+%	\vline
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{/home/julian/Downloads/Github/contrastive-predictive-coding/models/26_06_21-15-test|(2x)bl_MLP+bl_FCN+bl_TCN_block+bl_TCN_down+bl_TCN_flatten+bl_TCN_last+bl_alex_v2+bl_cnn_v0+bl_cnn_v0_1+bl_cnn_v0_2+bl_cnn_v0_3+bl_cnn_v1+bl_cnn_v14+bl_cnn_v15+bl_cnn_v2+bl_cnn_v3+bl_cnn_v4+bl_cnn_v5+bl_cnn_v6+bl_cnn_v7+bl_cnn_v8+bl_cnn/precision-scores-avg-dataloader0.tex}
+%		\caption{Models trained without class weights in the loss function.}	
+%		\label{tbl:precscores-avg-bl-noclass}
+%	\end{subfigure}
+%\end{figure}
+%\begin{figure}
+%	\captionof{table}{Baseline Recall scores}
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{/home/julian/Downloads/Github/contrastive-predictive-coding/models/25_06_21-16-test|bl_FCN+bl_MLP+bl_TCN_block+bl_TCN_down+bl_TCN_flatten+bl_TCN_last+bl_alex_v2+bl_cnn_v0+bl_cnn_v0_1+bl_cnn_v0_2+bl_cnn_v0_3+bl_cnn_v1+bl_cnn_v14+bl_cnn_v15+bl_cnn_v2+bl_cnn_v3+bl_cnn_v4+bl_cnn_v5+bl_cnn_v6+bl_cnn_v7+bl_cnn_v8+bl_cnn_v9+/recall-scores-avg-dataloader0.tex}
+%		\caption{Models trained with class weights in the loss function.}
+%		\label{tbl:recscores-avg-bl-class}	
+%	\end{subfigure}%
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{/home/julian/Downloads/Github/contrastive-predictive-coding/models/26_06_21-15-test|(2x)bl_MLP+bl_FCN+bl_TCN_block+bl_TCN_down+bl_TCN_flatten+bl_TCN_last+bl_alex_v2+bl_cnn_v0+bl_cnn_v0_1+bl_cnn_v0_2+bl_cnn_v0_3+bl_cnn_v1+bl_cnn_v14+bl_cnn_v15+bl_cnn_v2+bl_cnn_v3+bl_cnn_v4+bl_cnn_v5+bl_cnn_v6+bl_cnn_v7+bl_cnn_v8+bl_cnn/recall-scores-avg-dataloader0.tex}
+%		\caption{Models trained without class weights in the loss function.}	
+%		\label{tbl:recscores-avg-bl-noclass}
+%	\end{subfigure}
+%\end{figure}
+%\begin{figure}
+%	\captionof{table}{Baseline Custom Accuracy (Class Fit) scores}
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{/home/julian/Downloads/Github/contrastive-predictive-coding/models/25_06_21-16-test|bl_FCN+bl_MLP+bl_TCN_block+bl_TCN_down+bl_TCN_flatten+bl_TCN_last+bl_alex_v2+bl_cnn_v0+bl_cnn_v0_1+bl_cnn_v0_2+bl_cnn_v0_3+bl_cnn_v1+bl_cnn_v14+bl_cnn_v15+bl_cnn_v2+bl_cnn_v3+bl_cnn_v4+bl_cnn_v5+bl_cnn_v6+bl_cnn_v7+bl_cnn_v8+bl_cnn_v9+/Custom Accuracy (Class Fit)scores-avg-dataloader-0.tex}
+%		\caption{Models trained with class weights in the loss function.}
+%		\label{tbl:recscores-avg-bl-class}	
+%	\end{subfigure}%
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{/home/julian/Downloads/Github/contrastive-predictive-coding/models/26_06_21-15-test|(2x)bl_MLP+bl_FCN+bl_TCN_block+bl_TCN_down+bl_TCN_flatten+bl_TCN_last+bl_alex_v2+bl_cnn_v0+bl_cnn_v0_1+bl_cnn_v0_2+bl_cnn_v0_3+bl_cnn_v1+bl_cnn_v14+bl_cnn_v15+bl_cnn_v2+bl_cnn_v3+bl_cnn_v4+bl_cnn_v5+bl_cnn_v6+bl_cnn_v7+bl_cnn_v8+bl_cnn/Custom Accuracy (Class Fit)scores-avg-dataloader-0.tex}
+%		\caption{Models trained without class weights in the loss function.}	
+%		\label{tbl:recscores-avg-bl-noclass}
+%	\end{subfigure}
+%\end{figure}
+%\begin{figure}
+%	\captionof{table}{Baseline Custom Accuracy (Zero Fit) scores}
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{/home/julian/Downloads/Github/contrastive-predictive-coding/models/25_06_21-16-test|bl_FCN+bl_MLP+bl_TCN_block+bl_TCN_down+bl_TCN_flatten+bl_TCN_last+bl_alex_v2+bl_cnn_v0+bl_cnn_v0_1+bl_cnn_v0_2+bl_cnn_v0_3+bl_cnn_v1+bl_cnn_v14+bl_cnn_v15+bl_cnn_v2+bl_cnn_v3+bl_cnn_v4+bl_cnn_v5+bl_cnn_v6+bl_cnn_v7+bl_cnn_v8+bl_cnn_v9+/Custom Accuracy (Zero Fit)scores-avg-dataloader-0.tex}
+%		\caption{Models trained with class weights in the loss function.}
+%		\label{tbl:recscores-avg-bl-class}	
+%	\end{subfigure}%
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{/home/julian/Downloads/Github/contrastive-predictive-coding/models/26_06_21-15-test|(2x)bl_MLP+bl_FCN+bl_TCN_block+bl_TCN_down+bl_TCN_flatten+bl_TCN_last+bl_alex_v2+bl_cnn_v0+bl_cnn_v0_1+bl_cnn_v0_2+bl_cnn_v0_3+bl_cnn_v1+bl_cnn_v14+bl_cnn_v15+bl_cnn_v2+bl_cnn_v3+bl_cnn_v4+bl_cnn_v5+bl_cnn_v6+bl_cnn_v7+bl_cnn_v8+bl_cnn/Custom Accuracy (Zero Fit)scores-avg-dataloader-0.tex}
+%		\caption{Models trained without class weights in the loss function.}	
+%		\label{tbl:recscores-avg-bl-noclass}
+%	\end{subfigure}
+%\end{figure}
+%
+%\subsection{CPC Results}
+%\begin{figure}
+%	\captionof{table}{CPC F1 scores}
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{"/home/julian/Downloads/Github/contrastive-predictive-coding/models/09_07_21-17-test|(34x)cpc/f1-scores-avg-dataloader0.tex"}
+%		\caption{Models trained with class weights in the loss function.}
+%		\label{tbl:f1scores-avg-cpc-class}	
+%	\end{subfigure}%
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{"/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/CPC|no-class-weights/f1-scores-avg-dataloader0.tex"}
+%		\caption{Models trained without class weights in the loss function.}	
+%		\label{tbl:f1scores-avg-cpc-noclass}
+%	\end{subfigure}
+%\end{figure}
+%\begin{figure}
+%	\captionof{table}{CPC Precision scores}
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{/home/julian/Downloads/Github/contrastive-predictive-coding/models/09_07_21-17-test|(34x)cpc/precision-scores-avg-dataloader0.tex}
+%		\caption{Models trained with class weights in the loss function.}
+%		\label{tbl:precscores-avg-cpc-class}	
+%	\end{subfigure}%
+%	\vline
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/CPC|no-class-weights/precision-scores-avg-dataloader0.tex}
+%		\caption{Models trained without class weights in the loss function.}	
+%		\label{tbl:precscores-avg-cpc-noclass}
+%	\end{subfigure}
+%\end{figure}
+%\begin{figure}
+%	\captionof{table}{CPC Recall scores}
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{/home/julian/Downloads/Github/contrastive-predictive-coding/models/09_07_21-17-test|(34x)cpc/recall-scores-avg-dataloader0.tex}
+%		\caption{Models trained with class weights in the loss function.}
+%		\label{tbl:recscores-avg-cpc-class}	
+%	\end{subfigure}%
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/CPC|no-class-weights/recall-scores-avg-dataloader0.tex}
+%		\caption{Models trained without class weights in the loss function.}	
+%		\label{tbl:recscores-avg-cpc-noclass}
+%	\end{subfigure}
+%\end{figure}
+%\begin{figure}
+%	\captionof{table}{CPC Custom Accuracy (Class Fit) scores}
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{/home/julian/Downloads/Github/contrastive-predictive-coding/models/09_07_21-17-test|(34x)cpc/Custom Accuracy (Class Fit)scores-avg-dataloader-0.tex}
+%		\caption{Models trained with class weights in the loss function.}
+%		\label{tbl:recscores-avg-cpc-class}	
+%	\end{subfigure}%
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/CPC|no-class-weights/Custom Accuracy (Class Fit)scores-avg-dataloader-0.tex}
+%		\caption{Models trained without class weights in the loss function.}	
+%		\label{tbl:recscores-avg-cpc-noclass}
+%	\end{subfigure}
+%\end{figure}
+%\begin{figure}
+%	\captionof{table}{CPC Custom Accuracy (Zero Fit) scores}
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{/home/julian/Downloads/Github/contrastive-predictive-coding/models/09_07_21-17-test|(34x)cpc/Custom Accuracy (Zero Fit)scores-avg-dataloader-0.tex}
+%		\caption{Models trained with class weights in the loss function.}
+%		\label{tbl:recscores-avg-cpc-class}	
+%	\end{subfigure}%
+%	\begin{subfigure}[b]{0.49\hsize}\centering
+%		\input{/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/CPC|no-class-weights/Custom Accuracy (Zero Fit)scores-avg-dataloader-0.tex}
+%		\caption{Models trained without class weights in the loss function.}	
+%		\label{tbl:recscores-avg-cpc-noclass}
+%	\end{subfigure}
+%\end{figure}
+%
+%
+%
+%%\begin{minipage}[b]{1\hsize}\centering
+%%	
+%%	\captionof{table}{CPC F1 scores with class\_weights}
+%%	\label{tbl:f1scores-avg-cpc-class}
+%%	\input{"/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/CPC|class-weights/f1-scores-avg-dataloader0.tex"}
+%%	\captionof{table}{Models trained with class weights in the loss function. Legend:\newline
+%%		\hl{m:all} All latents are used as negative examples in the cpc loss.
+%%		\hl{m:same} Latents only from the same timestep are used as negative examples.
+%%		\hl{linear/cnn/twolinear/latent\_maximum} the used downstream architecture.
+%%		\hl{dte:x} Trained for x downstream epochs.
+%%		\hl{pte:x} Trained for x pretrain epochs}
+%%\end{minipage}
+%%\begin{minipage}[b]{1\hsize}\centering
+%%	\captionof{table}{CPC F1 scores without class\_weights}
+%%	\label{tbl:f1scores-avg-cpc-noclass}
+%%	\input{"/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/CPC|no-class-weights/f1-scores-avg-dataloader0.tex"}
+%%	\captionof{table}{Models trained with class weights in the loss function. Legend:\newline
+%%		frozen}	
+%%\end{minipage}
+%%
+%%\begin{minipage}[b]{0.49\hsize}\centering
+%%	\captionof{table}{Baseline precision scores with class\_weights}
+%%	\label{tbl:precisionscores-avg-bl-class}
+%%	\input{"/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/BL|class-weights/precision-scores-avg-dataloader0.tex"}
+%%	\captionof{table}{Models trained with class weights in the loss function.}	
+%%\end{minipage}%
+%%\begin{minipage}[b]{0.49\hsize}\centering
+%%	\captionof{table}{Baseline precision scores without class\_weights}
+%%	\label{tbl:precisionscores-avg-bl-noclass}
+%%	\input{"/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/BL|no-class-weights/precision-scores-avg-dataloader0.tex"}
+%%	\captionof{table}{Models trained without class weights in the loss function.}	
+%%\end{minipage}
+%%
+%%\begin{minipage}[b]{1\hsize}\centering
+%%	
+%%	\captionof{table}{CPC precision scores with class\_weights}
+%%	\label{tbl:precisionscores-avg-cpc-class}
+%%	\input{"/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/CPC|class-weights/precision-scores-avg-dataloader0.tex"}
+%%	\captionof{table}{Models trained with class weights in the loss function. Legend:\newline
+%%		\hl{m:all} All latents are used as negative examples in the cpc loss.
+%%		\hl{m:same} Latents only from the same timestep are used as negative examples.
+%%		\hl{linear/cnn/twolinear/latent\_maximum} the used downstream architecture.
+%%		\hl{dte:x} Trained for x downstream epochs.
+%%		\hl{pte:x} Trained for x pretrain epochs}
+%%\end{minipage}
+%%\begin{minipage}[b]{1\hsize}\centering
+%%	\captionof{table}{CPC precision scores without class\_weights}
+%%	\label{tbl:precisionscores-avg-cpc-noclass}
+%%	\input{"/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/CPC|no-class-weights/precision-scores-avg-dataloader0.tex"}
+%%	\captionof{table}{Models trained with class weights in the loss function. Legend:\newline
+%%		frozen}	
+%%\end{minipage}
+%%
+%%\begin{minipage}[b]{0.49\hsize}\centering
+%%	\captionof{table}{Baseline Custom Accuracy (Class Fit) scores with class\_weights}
+%%	\label{tbl:Custom Accuracy (Class Fit)scores-avg-bl-class}
+%%	\input{"/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/BL|class-weights/Custom Accuracy (Class Fit)scores-avg-dataloader-0.tex"}
+%%	\captionof{table}{Models trained with class weights in the loss function.}	
+%%\end{minipage}%
+%%\begin{minipage}[b]{0.49\hsize}\centering
+%%	\captionof{table}{Baseline Custom Accuracy (Class Fit) scores without class\_weights}
+%%	\label{tbl:Custom Accuracy (Class Fit)scores-avg-bl-noclass}
+%%	\input{"/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/BL|no-class-weights/Custom Accuracy (Class Fit)scores-avg-dataloader-0.tex"}
+%%	\captionof{table}{Models trained without class weights in the loss function.}	
+%%\end{minipage}
+%%
+%%\begin{minipage}[b]{1\hsize}\centering
+%%	
+%%	\captionof{table}{CPC Custom Accuracy (Class Fit) scores with class\_weights}
+%%	\label{tbl:Custom Accuracy (Class Fit)scores-avg-cpc-class}
+%%	\input{"/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/CPC|class-weights/Custom Accuracy (Class Fit)scores-avg-dataloader-0.tex"}
+%%	\captionof{table}{Models trained with class weights in the loss function. Legend:\newline
+%%		\hl{m:all} All latents are used as negative examples in the cpc loss.
+%%		\hl{m:same} Latents only from the same timestep are used as negative examples.
+%%		\hl{linear/cnn/twolinear/latent\_maximum} the used downstream architecture.
+%%		\hl{dte:x} Trained for x downstream epochs.
+%%		\hl{pte:x} Trained for x pretrain epochs}
+%%\end{minipage}
+%%\begin{minipage}[b]{1\hsize}\centering
+%%	\captionof{table}{CPC Custom Accuracy (Class Fit) scores without class\_weights}
+%%	\label{tbl:Custom Accuracy (Class Fit)scores-avg-cpc-noclass}
+%%	\input{"/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/CPC|no-class-weights/Custom Accuracy (Class Fit)scores-avg-dataloader-0.tex"}
+%%	\captionof{table}{Models trained with class weights in the loss function. Legend:\newline
+%%		frozen}	
+%%\end{minipage}
+%%
+%%\begin{minipage}[b]{0.49\hsize}\centering %(TODO: IS THIS CORRECT)
+%%	\captionof{table}{Baseline Custom Accuracy (Zero Fit) scores with class\_weights}
+%%	\label{tbl:Custom Accuracy (Zero Fit)scores-avg-bl-class}
+%%	\input{"/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/BL|class-weights/Custom Accuracy (Zero Fit)scores-avg-dataloader-0.tex"}
+%%	\captionof{table}{Models trained with class weights in the loss function.}	
+%%\end{minipage}%
+%%\begin{minipage}[b]{0.49\hsize}\centering
+%%	\captionof{table}{Baseline Custom Accuracy (Zero Fit) scores without class\_weights}
+%%	\label{tbl:Custom Accuracy (Zero Fit)scores-avg-bl-noclass}
+%%	\input{"/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/BL|no-class-weights/Custom Accuracy (Zero Fit)scores-avg-dataloader-0.tex"}
+%%	\captionof{table}{Models trained without class weights in the loss function.}	
+%%\end{minipage}
+%%
+%%\begin{minipage}[b]{1\hsize}\centering
+%%	
+%%	\captionof{table}{CPC Custom Accuracy (Zero Fit) scores with class\_weights}
+%%	\label{tbl:Custom Accuracy (Zero Fit)scores-avg-cpc-class}
+%%	\input{"/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/CPC|class-weights/Custom Accuracy (Zero Fit)scores-avg-dataloader-0.tex"}
+%%	\captionof{table}{Models trained with class weights in the loss function. Legend:\newline
+%%		\hl{m:all} All latents are used as negative examples in the cpc loss.
+%%		\hl{m:same} Latents only from the same timestep are used as negative examples.
+%%		\hl{linear/cnn/twolinear/latent\_maximum} the used downstream architecture.
+%%		\hl{dte:x} Trained for x downstream epochs.
+%%		\hl{pte:x} Trained for x pretrain epochs}
+%%\end{minipage}
+%%\begin{minipage}[b]{1\hsize}\centering
+%%	\captionof{table}{CPC Custom Accuracy (Zero Fit) scores without class\_weights}
+%%	\label{tbl:Custom Accuracy (Zero Fit)scores-avg-cpc-noclass}
+%%	\input{"/home/julian/Downloads/Github/contrastive-predictive-coding/models/16_06_21-15-test|(2x)bl_FCN+(2x)bl_cnn_v0+(2x)bl_cnn_v0_1+(2x)bl_cnn_v0_2+(2x)bl_cnn_v0_3+(2x)bl_cnn_v1+(2x)bl_cnn_v14+(2x)bl_cnn_v2+(2x)bl_cnn_v3+(2x)bl_cnn_v4+(2x)bl_cnn_v5+(2x)bl_cnn_v6+(2x)bl_cnn_v8+(2x)bl_cnn_v9+(50x)cpc+bl_MLP/CPC|no-class-weights/Custom Accuracy (Zero Fit)scores-avg-dataloader-0.tex"}
+%%	\captionof{table}{Models trained with class weights in the loss function. Legend:\newline
+%%		frozen}	
+%%\end{minipage}
+%
+%%\section{Figures}
+%%\begin{figure}
+%%	\begin{subfigure}[t]{.4\textwidth}	
+%%		\includegraphics[width=\linewidth]{bilder/cpc-receptive-1p.png}
+%%		\caption{Receptive field of standard CPC architecture from the paper for audio classification and number of times each pixel is used to calculate one pixel of the network output.}
+%%		\label{explain}
+%%		\centering
+%%	\end{subfigure}
+%%	\hfill
+%%	\begin{subfigure}[t]{.4\textwidth}
+%%		\centering
+%%		\includegraphics[width=\linewidth]{bilder/tcn-receptive-1p.png}
+%%		\caption{Receptive field of a dilated convolutional net with fixed filtersize and exponentially increasing dilation and the number of times each pixel is used to calculate one pixel of the network output.}
+%%		\label{explain}
+%%	\end{subfigure}
+%%	
+%%	\medskip
+%%	
+%%	\begin{subfigure}[t]{.4\textwidth}
+%%		\centering
+%%		\includegraphics[width=\linewidth]{bilder/cpc-receptive-57p.png}
+%%		\caption{Receptive field of standard CPC architecture from the paper for audio classification and number of times each pixel is used to calculate all 57 pixels of the network output.}
+%%		\label{explain}
+%%	\end{subfigure}
+%%	\hfill
+%%	\begin{subfigure}[t]{.4\textwidth}
+%%		\centering
+%%		\includegraphics[width=\linewidth]{bilder/tcn-receptive-57p.png}
+%%		\caption{Receptive field of a dilated convolutional net with fixed filtersize and exponentially increasing dilation and the number of times each pixel is used to calculate all 57 pixels of the network output.}
+%%		\label{explain}
+%%	\end{subfigure}
+%%\end{figure}
+%
+
+
+\input{codeanhang}
+%\startcontents
+%\printcontents{}{0}[5]{}
+%\input{codeanhang}
+%\includepdf[pages=-]{texcode/Challenge Data Visualization.pdf}
+%\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline/baseline_cnn_v0.py"}

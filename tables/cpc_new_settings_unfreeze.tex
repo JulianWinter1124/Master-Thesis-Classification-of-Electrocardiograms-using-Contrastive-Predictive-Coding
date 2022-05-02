@@ -1,0 +1,13 @@
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{lrrrlllllrr}
+{model} & {Freeze CPC} & {strided} & {Downstream Epochs} & {CPC Sampling Mode} & {Encoder} & {Autoregressive} & {Predictor} & {Downstream Model} & {micro} & {macro} \\
+CPC & False & False & 20.000 & same & cpc\_encoder\_v0 & cpc\_autoregressive\_v0 & cpc\_predictor\_v0 & cpc\_downstream\_twolinear\_v2 & 0.896 & 0.851 \\
+CPC & False & False & 40.000 & crossentropy & cpc\_encoder\_likev8 & cpc\_autoregressive\_hidden & cpc\_predictor\_stacked & cpc\_downstream\_twolinear\_v2 & 0.917 & 0.810 \\
+CPC & False & False & 40.000 & crossentropy & cpc\_encoder\_v0 & cpc\_autoregressive\_hidden & cpc\_predictor\_v0 & cpc\_downstream\_latent\_maximum & \bfseries \underline{0.927} & \bfseries \underline{0.851} \\
+CPC & False & True & 20.000 & crossentropy & cpc\_encoder\_v0 & cpc\_autoregressive\_v0 & cpc\_predictor\_v0 & cpc\_downstream\_twolinear\_v2 & 0.881 & 0.824 \\
+CPC & False & True & 20.000 & same & cpc\_encoder\_v0 & cpc\_autoregressive\_v0 & cpc\_predictor\_v0 & cpc\_downstream\_twolinear\_v2 & 0.905 & 0.847 \\
+CPC & False & True & 40.000 & crossentropy & cpc\_encoder\_v0 & cpc\_autoregressive\_v0 & cpc\_predictor\_v0 & cpc\_downstream\_latent\_maximum & 0.916 & 0.799 \\
+CPC & True & False & 40.000 & crossentropy & cpc\_encoder\_v0 & cpc\_autoregressive\_v0 & cpc\_predictor\_v0 & cpc\_downstream\_twolinear\_v2 & 0.922 & 0.816 \\
+CPC & True & False & 40.000 & crossentropy-nocontext & cpc\_encoder\_likev8 & cpc\_autoregressive\_hidden & cpc\_predictor\_nocontext & cpc\_downstream\_twolinear\_v2 & 0.898 & 0.806 \\
+\end{tabular}
+\end{adjustbox}

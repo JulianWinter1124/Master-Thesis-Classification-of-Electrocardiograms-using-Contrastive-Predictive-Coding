@@ -1,0 +1,23 @@
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{lrrllrr}
+{model} & {Freeze CPC} & {strided} & {CPC Sampling Mode} & {Downstream Model} & {micro} & {macro} \\
+CPC & True & False & all & cpc\_downstream\_latent\_average & 0.899 & 0.792 \\
+CPC & True & False & all & cpc\_downstream\_latent\_maximum & 0.910 & 0.797 \\
+CPC & True & False & all & cpc\_downstream\_twolinear\_v2 & 0.889 & 0.816 \\
+CPC & True & False & crossentropy & cpc\_downstream\_latent\_average & 0.912 & 0.788 \\
+CPC & True & False & crossentropy & cpc\_downstream\_latent\_maximum & 0.908 & 0.780 \\
+CPC & True & False & crossentropy & cpc\_downstream\_twolinear\_v2 & 0.872 & 0.809 \\
+CPC & True & False & same & cpc\_downstream\_latent\_average & 0.903 & 0.772 \\
+CPC & True & False & same & cpc\_downstream\_latent\_maximum & 0.901 & 0.802 \\
+CPC & True & False & same & cpc\_downstream\_twolinear\_v2 & 0.882 & \bfseries \underline{0.823} \\
+CPC & True & True & all & cpc\_downstream\_latent\_average & 0.902 & 0.766 \\
+CPC & True & True & all & cpc\_downstream\_latent\_maximum & 0.904 & 0.779 \\
+CPC & True & True & all & cpc\_downstream\_twolinear\_v2 & 0.900 & 0.806 \\
+CPC & True & True & crossentropy & cpc\_downstream\_latent\_average & 0.896 & 0.715 \\
+CPC & True & True & crossentropy & cpc\_downstream\_latent\_maximum & 0.896 & 0.708 \\
+CPC & True & True & crossentropy & cpc\_downstream\_twolinear\_v2 & 0.872 & 0.793 \\
+CPC & True & True & same & cpc\_downstream\_latent\_average & 0.905 & 0.780 \\
+CPC & True & True & same & cpc\_downstream\_latent\_maximum & 0.903 & 0.794 \\
+CPC & True & True & same & cpc\_downstream\_twolinear\_v2 & \bfseries \underline{0.917} & 0.808 \\
+\end{tabular}
+\end{adjustbox}

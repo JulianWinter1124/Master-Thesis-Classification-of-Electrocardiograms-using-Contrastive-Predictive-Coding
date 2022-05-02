@@ -1,0 +1,1014 @@
+\section{Implementation}
+In this section we describe our different models and their implementational details. All code is available at our github repository\footnote{\url{https://github.com/Lullatsch/ecg-cpc}}.
+
+\subsection{CPC}
+Since CPC is a \enquote{self-supervised} architecture, there are different parts of the network that are used according to the current task. The pretraining architecture without labels is described in \autoref{sec:cpc-unsupervised}. The downstream training architecture is described in \autoref{sec:cpc-supervised}.
+
+\subsubsection{Unsupervised}\label{sec:cpc-unsupervised}
+CPC was implemented following the original paper \autocite{DBLP:journals/corr/abs-1807-03748} with focus on the section "3.1 Audio", which uses CPC as a speaker and phone classification method on the librispeech dataset. Since audio data is also sequential and thus comparable to ECG data, the architectural details were a good starting point. We adopted the encoder network with only small changes, which means we use 5 convolutional layers with kernel-sizes $[10, 8, 4, 4, 4]$, strides $[5, 4, 2, 2, 2]$ and ReLU activations in between, directly on the input data. The amount of channels is set to $128$ after the initial $12$. This is different from the original paper \autocite{DBLP:journals/corr/abs-1807-03748} where $512$ "hidden units" are used instead. This means that each latent vector has the length $l_{size}=128$. The latents are calculated \enquote{in one go}, which means for this architecture and a data input with dimensions $\mathit{batch} \times 12 \times 4500$, a latent matrix sized $\mathit{batch} \times l_{size} \times t_{total} = \mathit{batch} \times 128 \times 26$ is calculated. The total number of latent timesteps $t_{total}=26$ is directly given by the architecture and input data length. The transposed encoder output/latent matrix is fed into a GRU model with a hidden state dimension of $256$ to form the models context for each of the columns in the latent-matrix, resulting in the context-matrix of shape $\mathit{batch} \times 26 \times 256$. In theory, since a recurrent network is used for its calculation, each context vector in the context-matrix can represent a summary or state of the prior latent vectors. From a selected column $t$ in the context-matrix, $t_{out}=12$ individual linear/fully-connected layers are used to predict $t_{out}=12$ latent vectors into the future. The value of $t$ should not be selected to low, as a meaningful context, from which can be predicted correctly, requires multiple latents. In our case, we select the latest possible context vector $t=t_{total}-t_{out}=26-12=14$th timestep, which is also the most interesting context entry, since it encodes all seen latents. Note that you can also make the $t_{out}=12$ predictions from every possible column $\{t | t_{in}\leq t \leq t_{total}-t_{out}\}$ in the context matrix in one forward pass, to make more use of the input data, however this comes at the cost of training time. $t_{in}$ eg.$=12$ is newly introduced additional hyperparameter which defines how many latent vector are at least used to encode the context. A randomly selected timestep from the set $\{t | t_{in}\leq t \leq t_{total}-t_{out}\}$ is another possibility which we used. 
+
+Now with the encoded and predicted latent values only, the CPC-loss can be drawn.
+
+Like in the introduction already mentioned the CPC loss uses a modified noise contrastive estimation loss called \textit{InfoNCE}. Here the negative samples are other ECG files drawn from the batch. We differentiate between the latent sets $A=\{z_{j,l}|j\neq i \land l\in[1, |z_j|]\}$ (all latents including past and future from other patients) and $A_2=\{z_{j,l}|j\neq i \land l = t+k\}$ (only latents from other patients at the same timesteps) as negative examples. The details on the loss are explained in algorithm \autoref{algorithm:cpc-algo}, \autoref{algo:cpcslow}, \autoref{algo:cpcfast} or in \autoref{section:cpcindetail}.
+
+\subsubsection{Supervised}\label{sec:cpc-supervised}
+For the downstream task, the InfoNCE-loss function is not used anymore. Nevertheless the whole network that calculates latent-, context- or future latent-vectors will still be used. In the original paper \autocite{DBLP:journals/corr/abs-1807-03748}, a single linear layer is used on the last context vector in conjunction with a multi-class linear logistic regression classifier to predict the data labels. We applied multiple different architectures to the models output; for a full list see section \autoref{sec:cpc-downnetwork}
+
+\subsection{CPC with modifications}
+Apart from the model described above, additional architectures similar to the CPC audio architecture were examined with changes to different parts of the network.
+
+\subsubsection{Loss calculation changes}
+\paragraph{Latent sampling}
+As already mentioned (see right sum in denominator of \autoref{algorithm:cpc-algo}) there are multiple possibilities as to what negative samples (other latent vectors) are compared to the "current" latent prediction:
+$N = \mathit{batch\ size}, t=\mathit{total\ timesteps}, t_{out}=\mathit{number\ of\ predicted\ timesteps}$
+\begin{itemize}
+	\item[\underline{same}] uses all latent vectors from the same timestep as the predicted latent vector in the batch. The model has thus to recognize one value under $N$ values for each predicted timestep, for all items in the batch $=N^2*t_{out}$ total guesses.
+	\item[\underline{future}] uses all latent vectors from future timesteps in the loss calculation. The model has to recognize the correct latent value under $N*t_{out}$ values for each predicted timestep, for all items in the batch $=N^2*t_{out}^2$ total guesses.
+	\item[\underline{all}] uses all latent vectors from all available timesteps in the loss calculation. The model has to recognize the correct latent value under $N*t$ values for each predicted timestep, for all items in the batch $=N^2*t*t_{out}$ total guesses. In the results this method is the same as \underline{crossentropy} which just uses a slightly different implementation and is always used in conjunction with "Fewer Latent Vectors" (\autoref{sec:fewerlatentvectors}).
+\end{itemize}
+
+\paragraph{Fewer latent vectors}\label{sec:fewerlatentvectors}
+One handicap we came across during training is that with many latent vectors, which might get generated for long input sequences or an encoder architecture with a lower downscaling factor, the loss calculation takes a long time because the model has to calculate big dot product matrices and the softmax afterwards, which is a costly operation. Furthermore recurrent architectures tend to consume large amounts of memory for long input sequences which even made training impossible altogether in some cases.
+
+As a solution we limited the latents which are to be used in the loss calculation to a fixed number, instead of trying to use all latent vectors. During Downstream training, all data is used again, which allows for a more representative context matrix and is important for correct classification. The network is called \code{cpc\_intersect\_manylatents} (because it "deals with" many latents), as opposed to the standard architecture \code{cpc\_intersect}.
+
+\paragraph{Normalized latent vectors}\label{sec:normalizedlatents}
+We test normalizing the latent vectors $z$ and $\hat{z}$ to unit vectors (length is $1$), before their multiplication in the loss to receive scalar values in range [-1, 1], instead of an open interval. As a result we can observe the following properties:
+\begin{enumerate}
+	\item If $z*\hat{z} = 1 \implies z$ and $\hat{z}$ are parallel and point in the same direction.
+	\item If $z*\hat{z} = 0 \implies z$ and $\hat{z}$ are orthogonal.
+	\item If $z*\hat{z} = -1 \implies z$ and $\hat{z}$ are parallel and point in the opposite direction.
+\end{enumerate}
+We justify this change because higher valued latent vectors that are not calculated from the current context, but still point in the generally same direction, might be falsely classified as the positive sample. Note that during downstream tasks, we tested both to return the un-normalized calculated latents and the unit vectors, where returning the normalized vectors worked better by a margin. The loss function thus becomes:
+\begin{equation}
+	\mathit{Loss}_i := -\frac{1}{k}\sum_{k=1}^{n}\log\left[\frac{\exp(\frac{\hat{z}_{i, t+k}}{\|\hat{z}_{i, t+k}\|}^T\frac{z_{i, t+k}}{\|z_{i, t+k}\|})}{\exp(\frac{\hat{z}_{i, t+k}}{\|\hat{z}_{i, t+k}\|}^T\frac{z_{i, t+k}}{\|z_{i, t+k}\|})+\underset{{(j,l)\in \{(j,l)|j\neq i \land l \leq |z_i|\}}}{\sum \exp(\frac{\hat{z}_{i, t+k}}{\|\hat{z}_{i, t+k}\|}^T\frac{z_{j, l}}{\|z_{j, l}\|)}})}\right]
+\end{equation}
+To circumvent an erroneous division by $0$ and the loss becoming undefined, we clip all vector lengths to be in the interval $[\epsilon, \infty]$, where $\epsilon$ is a constant scalar (we chose $1e-6$):
+
+$\|z\|^*=
+\begin{cases}
+	\|z\|,& \text{if } \|z\| > \epsilon\\
+	\epsilon,& \text{else}\\
+\end{cases}$
+
+%We additionally tried instead of clipping:
+%\begin{equation}
+%	\mathit{Loss}_i := -\frac{1}{k}\sum_{k=1}^{n}\log\left[\frac{\exp(c\cdot\frac{\hat{z}_{i, t+k}}{\|\hat{z}_{i, t+k}\|}^T c\cdot\frac{z_{i, t+k}}{\|z_{i, t+k}\|})}{\exp(c\cdot\frac{\hat{z}_{i, t+k}}{\|\hat{z}_{i, t+k}\|}^T c\cdot\frac{z_{i, t+k}}{\|z_{i, t+k}\|})+\underset{{(j,l)\in \{(j,l)|j\neq i \land l \leq |z_i|\}}}{\sum \exp(c\cdot\frac{\hat{z}_{i, t+k}}{\|\hat{z}_{i, t+k}\|}^T c\cdot\frac{z_{j, l}}{\|z_{j, l}\|)}})}\right]
+%\end{equation}
+
+However in practice our model scores in the result section got slightly downgraded by normalizing the latent vectors. We suspect that although having access to the properties of comparing unit vectors, this change also restricted the model, hurting classification accuracy.
+
+\subsubsection{Encoder networks}
+The encoder architecture from the paper produces $26$ latent vectors for data with length $4500$. There one cannot control how many latent vectors get produced, besides changing the encoder architecture or varying data length. Since each latent vector is calculated from at least $465$ datapoints, which can be calculated by transposing the convolutions in the architecture, and each vector represents a window shifted by $5*4*2*2*2=160$ (product of strides, or the downsampling factor given in the original paper), this is equal to an overlap of $\frac{465-160}{465}=\frac{305}{465}\approx\frac{2}{3}$ in the data for neighboring vectors, making the exploitation of local smoothness in the next step prediction likely. Furthermore we would like to point out that the statement from the paper: \enquote{The total downsampling factor of the network is 160 so that there is a feature vector for every 10ms of speech}, is ambiguous, since it conveys the impression that one latent vector is being created from 10ms of audio. In reality one latent vector is being calculated from 465 data points $\frac{465}{16000\mathit{hz}}*1000\approx29\mathit{ms}$ rather than from $\frac{160}{16000\mathit{hz}}*1000=10\mathit{ms}$. It would be more correct to say that one latent vector is calculated from $\frac{465}{16000\mathit{hz}}*1000\approx29\mathit{ms}$ of audio, with an overlap of $\frac{305}{16000\mathit{hz}}*1000\approx19\mathit{ms}$, creating an additional non disjoint latent vector after every $\frac{160}{16000\mathit{hz}}*1000=10\mathit{ms}$.
+\paragraph{Data sliding window} \label{sec:cpc-strided}
+We compare the original "intersecting" model to a different encoder network that encodes the data by breaking it into multiple non-overlapping windows and then encodes each separately. This ensures that the autoregressive model has to predict future latent vectors which are not calculated from partly identical data and thus have to learn non-local features that do not exploit "local smoothness". Additionally the differentiation between positive and negative samples should be a lot harder too, improving the latent representations. In detail that means an input array of size $\mathit{batch} \times \mathit{channels} \times \mathit{length}$ is split into a fixed number e.g. $M \times \mathit{batch} \times \mathit{channels} \times \frac{\mathit{length}}{M}$ of non-overlapping windows, which are then encoded into $M \times \mathit{batch}$ latent vector. The model is called \enquote{strided} in the results and \code{cpc\_encoder\_as\_strided} in the code, where it acts as a module wrapper applicable to every encoder network.
+
+%This might be possible to counteract by \emph{not} predicting the next $1, ..., n$ steps, but rather the next $a, ..., n$ for $a\geq2$ or, like in the paper mentioned but not applied, using masked convolutional layers, which could "black-out" values already seen by previous iterations. 
+
+One downside is that the window-size $\frac{length}{M}$ needs to be fixed or more specifically for an input with dimensions $batch \times channels \times \frac{length}{M}$ the architecture needs to produce exactly $batch \times latentsize \times 1$ values. This can be easily solved with mean pooling or similar methods but not relying on those techniques may yield more accurate results. 
+Furthermore, using the same encoder as in the original architecture, due to no data overlap, we produce less latent vectors which becomes a problem for small data lengths. Using different encoders that can deal with smaller input sizes than $465$ would solve this data restriction.
+\paragraph{Baseline-like Network}
+To evaluate whether potential downstream task performance differences were stemming from architecture distinctions rather than the special CPC pretraining, we used the good working baseline architecture \code{baseline\_v8} (explained later) as an encoder network, called \code{cpc\_encoder\_likev8}. It comes with the property of reducing less values from the input data, making the output larger which can be useful if the data contains many information or if a larger output is needed for following tasks. One difficulty that arises due to the smaller downsampling factor in comparison to the standard cpc encoder, is that more latent vectors are created, which in turn leads to heavily inflated training durations, mostly because of the latent sampling method. Additionally recurrent architectures sometimes fail to cope with very long input sequences. The issue was solved by combining this encoder network with a different architecture that uses a fixed-size subset of latent vectors, already explained in \autoref{sec:fewerlatentvectors}, returning in fewer latents during the loss calculation.
+
+\subsubsection{Context prediction networks}
+In the original paper a GRU model is used to summarize all latent vectors prior to the current timestep into a context vector. We assume that, in the paper, the output for each latent vector is meant with "model output" and took the last output as the context. In contrast to that we implemented a network which uses the hidden state as context and predicts the future latent values from there. Since the hidden state is internally used to calculate the autoregressive model output, it should contain a lot of information about past latents, which makes it a good candidate for next-step latent prediction as well. It is called \code{cpc\_autoregressive\_hidden} in the code.
+
+\subsubsection{Latent prediction networks}
+Originally CPC uses a fixed number of simple weight matrices/ single linear layers to predict future latents from the current context. Next to this predictor which internally uses $12$ linear layers to predict $12$ latent vectors, called \code{cpc\_predictor\_v0}, we additionally implemented a predictor that completely eliminates the use of an autoregressive context network by directly predicting future latent vectors from past latents. For this we used a Temporal Convolutional Network \autocite{bai2018empirical}, which is a convolutional many-to-many sequence architecture we also used as one of our baselines (see Baseline \autoref{sec:literature-arch}). As a result, no pretrained context matrix is available in downstream-training, but we relief the model from first summarizing latent values and then secondly applying a number of linear layers synchronously.
+
+\subsubsection{Downstream task networks}\label{sec:cpc-downnetwork}
+For each ECG sample, CPC calculates latent vectors with the encoder model, and a context vector with the autoregressive model. Although both can be used for classification later on, it is easier to use the context vector because only one is getting calculated no matter the ECG signal length. Nevertheless if we use the latent vectors during downstream training, to account for varying dimensions, latents have either been flattened, summarized with a new autoregressive architecture, or pooled to obtain a single dimension for prediction with linear layers. The output of the networks is then activated with a sigmoid function. We differentiate between multiple network-types:
+\begin{itemize}
+	\item \underline{Single Linear Layer + Pooling} In the original paper, to test the capabilities of CPC, a single linear layer was used on the latent vectors. However since our input size might change we used a pooling operation to condense multiple latents into one feature vector. Afterwards we apply a linear layer to the output. Because the context vector was used to predict future latents, it should contain enough information about the data for classification. As a result we can use the context vector as a feature vector too, which we do by feeding it to a linear layer. If both latents and context are desired, we add both together to form the output, before a sigmoid activation is used. This model is called \code{cpc\_downstream\_only} in the results.
+	\item \underline{Single Conv. Layer + RNN} Following works that omit linear layers completely, we also test a single convolutional layer that predicts the output classes in the channel dimension. If latents are used in the prediction we summarize latents with an additional GRU with hidden size $256$. If both latents and context are used in downstream training the values are concatenated, instead of added. (\code{cpc\_downstream\_cnn} in the results.)
+	\item \underline{Linear Layer + Pooling} In this network we make class prediction for all latents with a single linear layer. To obtain the final result we simply take the maximum value across the data dimension for each of the separate classes. If the context is used a single linear layer is used on the context vector. If both latents and context are used we simply add both outputs together before calculating the sigmoid activation. The model \code{cpc\_downstream\_latent\_maximum} uses the maximum pooling operation. The idea behind this network is that each latent might include some class that is supposed to be propagated into the final result with the maximum pooling, no matter how often the class appears. The model \code{cpc\_downstream\_latent\_average} applies an average pooling operation instead, which makes classes that appear in the data at multiple locations more likely to be considered true in the final probability output.
+	\item \underline{2 Linear Layers + RNN} If the predicted classes are not linearly separable from context and latents, additional layers have to be used. We examined two stacked linear layers with ReLU activation in between. Again, when latents are used, they are summarized with a GRU network with hidden size $256$. If both context and latents are used they are stacked together and then forwarded through the two linear layers. (\code{cpc\_downstream\_twolinear} in the code)
+	\item \underline{2 Linear Layers + Max Pool} In addition to the 2 linear layers above, we also used an identical network with the difference that latents are maximum pooled instead, and latents and context are added instead of stacked, after they have been feed through the linear layers. (\code{cpc\_downstream\_twolinear\_v2} in the code)
+\end{itemize}
+We decided against using deeper, more powerful models, as we want to focus on the latent representations learnt during pretraining, rather than finding the theoretically best performing model in general.
+\subsection{Baselines}
+We implemented different fully supervised models to compare the CPC-models' performance on the ECG data.
+
+\subsubsection{Custom baseline architectures}
+Multiple hand crafted fully supervised convolutional architectures were examined, each with slight modifications to test for the best performance.  
+
+The different baseline architectures were build to have different sets of the following parameters:
+\begin{description}
+	\item \underline{Number of Convolutions}: Two up to six stacked layers of one dimensional convolutional layers have been tested
+	\item \underline{Use of BatchNorm}: We tried if including a BatchNorm\autocite{ioffe2015batch} layer after each Convolution helps training and found that it slightly sped up convergence but since we trained for a fixed set of epochs this benefit was negligible
+	\item \underline{Strides}: We found that using strides $>1$ in early network layers improved accuracy and lead to better performance in most networks.
+	\item \underline{Pooling}: Different Pooling operations have been tried either between all layers, or at the end of the network. Namely Global Average Pooling (AdaptivePooling with output size 1), Maximum and Average Pooling with different kernelsizes. 
+	\item \underline{Dilation}: We used dilation in different layers. As argued in the TCN paper \autocite{yu2016multiscale} dilated convolutions can build big receptive fields in a short number of layers (receptive field is exponential to number of layers) making it ideal for our ECG data.
+	\item \underline{Kernel size}: Different kernel sizes were experimented with ranging from 3 to 12 (or 1 in special cases). We observe that using bigger kernelsizes in early layers helped accuracy.
+	\item \underline{Final output Layer}: We applied a linear layer to the convolutional network output (filter output map), in order to calculate scores for all the diagnostic classes. However multiple approaches have been taken to reshape the network output of shape $(N, C, L) := (\mathit{batch} \times \mathit{convchannels} \times \mathit{datalength})$
+	\begin{enumerate} \label{desc:enum}
+		\item \label{desc:en1} Flatten the tensor to receive a shape of $(N, C*L)$
+		\item \label{desc:en2} Take only the last value in the data dimension to receive a shape of $(N, C, 1)$
+		\item \label{desc:en3} Use a global pooling (mean or max) operation to receive a shape of $(N, C, 1)$
+		\item \label{desc:en4} Use an additional convolutional layer  with $L$ input channels, an output channel of $1$ and a kernel size of $1$, on the last dimension of the transposed data to receive a shape of $(N, C, 1)$
+		\item \label{desc:en5} Use a recurrent architecture to summarize the values in the last dimension by outputting a vector at each step and taking the last as context, to receive a shape of $(N, C, 1)$		
+	\end{enumerate}
+\end{description}
+Although \ref{desc:en1} seems like a good idea because no information is lost, the accuracy was low when $L$ was large and the weight matrix for the linear layer gets substantially bigger, resulting in longer training times, higher memory requirements and a harder training process.
+Option \ref{desc:en2}  is the least taxing operation, however a lot of information is lost in the process which also reflected in a lowered accuracy.
+Option \ref{desc:en3}  does not introduce new parameters and worked approximately as good as option \ref{desc:en2}.  However the bigger the filter output map, the worse the network performed in general.
+Option \ref{desc:en4}  performed the best by a margin, but also introduced new parameters since a new weight matrix for the filter has to be learned. However we opt to still use this option because it is more expressive and can even learn both option \ref{desc:en2} or \ref{desc:en3}, if desired. Furthermore convolutions with a 1x1 kernel (1 in our case because of data dimension) are widely used as a downsampling measure and are established in many models.
+Option \ref{desc:en5}  can be compared to the CPC architecture, however when trained supervised end-to-end this method did perform poorly. We suspect that the partly large values for $L$ make it difficult to train recurrent architectures.
+
+While we think that there are many possible approaches to summarizing the last layers output, the best solution might be to choose architectures that obtain small values for $L$.
+
+Most models follow a general structure: 
+
+Multiple one-dimensional Convolution Layers with decreasing kernel sizes and either stride or dilation, get stacked with ReLU after each Layer. Batchnorm is added to some models. The first few layers of the network are supposed to downsample the data using big kernel sizes and strides, reducing memory footprint for the model drastically. After the downsampling layers, additional one-dimensional convolutional layers have been used, this time with a mostly fixed kernel size of 3, low or no strides and no or increasing dilation, which increase the networks receptive field, potentially extracting wide spanning features. The number of filters is increased from 12 to 128 to allow enough features to be learned by the model. The filter number has been kept constant at 128, which is unusual but since we had differing layer numbers we opted for a simple solution. Finally the non-channel dimension has been summarized by a one of the techniques described in \hyperref[desc:en1]{\underline{Final output Layer}}. The resulting data of shape (Batch-size, 128, $1$) is fed into a fully connected or convolutional layer with sigmoid as activation function, to predict class labels with probability scores $\in [0, 1]$ each. Note that Softmax is not used as the probabilities do not add up to $1$ in multi-label classification. 
+
+Table \ref{table:modelattributes} summarizes most of the differing model attributes described above. The model names are the same as in the results.
+
+
+Because the summary table can not fully capture all details of the different models, we will briefly describe our baseline models here, that either do not fit the above general description or get used often:
+\begin{itemize}
+	\item[\code{BL\_v0}] 2 one-dimensional convolutinal layers, with kernel-sizes $[7,3]$, dilations $[1, 3]$ and ReLU activations. The output is summarized by a convolutional with kernel size 1 (option \ref{desc:en4}).
+	%\item[\code{BL\_v0\_1}] Similar to \code{BL\_v0} but additionally uses strides $[2, 1]$.
+	\item[\code{BL\_v0\_2}] consists of 5 Conv1D Layers with kernel sizes of $[7,5,5,3,3,3]$, dilations of $[1,1,1,1,2,4]$, strides $[4,3,3,1,1,1]$ and ReLU inbetween. The channel number is dropped down to $32$ in the first layer with stride $1$, and then increased back up to $64$. The idea behind this network is to downsample the input in the first few layers and then extract spanning features with dilations without striding.
+	\item[\code{BL\_v2}] \code{BL\_v2}, consists of 5 Conv1D Layers with kernel sizes of $3$ and dilations of $[1,2,4,8,16]$, the channel size is $128$ after the initial $12$. BatchNorm and ReLU is applied after each layer. At the end of each besides the last layer a maximum pooling layer with filter size $3$ is used. The output is summarized with a global average pool like option \ref{desc:en3} describes.
+	%\item[\code{BL\_v7}] 5 convolutional layers with ReLU activations in between and a (TODO)
+	\item[\code{BL\_v8}] Similar to \code{BL\_v2} but smaller, \code{Baseline\_v8} consists of 4 Conv1D Layers with kernel sizes of $3$ and dilations of $[1,2,4,8]$, the channel size is $128$ after the initial $12$. BatchNorm and ReLU is applied after each layer. At the end of each besides the last layer a maximum pooling layer with filter size $3$ is used. The output is downsampled in the data dimension like option \ref{desc:en4} describes. 
+%	\item[\code{BL\_v15}] Similar to \code{BL\_v8}, but uses dilations of $[1,7,21,63]$ instead, resulting in a much smaller output size.
+	%TODO add some? or all?
+\end{itemize}
+
+
+\subsubsection{Literature architectures} \label{sec:literature-arch}
+In addition to the custom-designed architectures above, we tested already existing or slightly modified architectures that were reported to work on timeseries classification:
+\begin{description}
+	\item [MLP] The Multi-Layer-Perceptron is a three linear layer network with dropout and ReLU activations from \autocite{strongbaseline} (\code{BL\_MLP} in results)
+	\item [FCN] The Fully Convolutional Network consists of three convolutional layers with BatchNorm, ReLU and a global pooling operation from \autocite{strongbaseline}. (\code{BL\_FCN} in results)	
+	\item [Multi Scale 1D ResNet] A Residual Network which uses one instead of two dimensional convolutions, tuned for timeseries classification \autocite{githubmultiscale}. Multiple subarchitectures are used in parallel to allow for modeling close and long distance coherence in sequential data. Each subarchitecture uses different filter sizes and striding to produce local or global features at the same time. (\code{BL\_v14} in results.)
+	\item [TCN] Temporal Convolutional Networks \autocite{bai2018empirical} aim to provide an almost fully convolutional sequence-to-sequence alternative to RNNs, which brings perks like low memory requirements, more stable gradients and parallelism (predicting many timesteps at once). Exponentially increasing dilation sizes help in building a big receptive field, theoretically ideal for modeling long distance coherence in sequential data. (\code{BL\_TCN} in results)
+	Since this model's output has the same length as the models input, we had yet again to find a solution to reduce the output length and tested multiple variants:
+	\code{TCN\_down} uses a convolutional layer with filter-size 1 to reduce output. \code{TCN\_last} uses the last value in the output of the data dimension, following one of the examples in the authors github repository \footnote{https://github.com/locuslab/TCN/tree/master/TCN/mnist\_pixel}
+	\item[Alexnet] The Alexnet is an architecture known for image classification. Here we implemented it with 1D convolutions and two different kernel sizes otherwise following the implementation from pytorch \autocite{visionalexnetpyatmasterpytorchvision-2021-06-26}.	(\code{BL\_alex\_v2} in the code)
+\end{description}
+
+Again, Table \ref{table:modelattributes} summarizes most model attributes described above.
+
+\begin{table}
+	\rotatebox{90}{
+		\resizebox{1.0\textheight}{!}{
+			\input{tables/model-attributes.tex}	
+	}}
+	\caption{Model attributes summarized. Final Layer number refers to the enumeration \underline{Final Output Layer} \ref{desc:enum}.}
+	\label{table:modelattributes}	
+\end{table}
+
+\section{Training}
+
+\subsection{Data preprocessing} \label{section:prep}
+
+All data has been resampled to 500hz, if it were not already. The networks are trained on cropped data with length fixed to 4500 (mostly down from 5000), all 12 channels have been used. In rare cases, where the available data was shorter than $4500$, we repeatedly padded the rightmost value for each channel. The data was split into training-, validation- and test-set randomly with a fraction of $\frac{7}{10}, \frac{2}{10},$ and $\frac{1}{10}$ respectively, while still ensuring that every class follows those fractions approximately. The data distribution is displayed in the introduction in \autoref{fig:ClassCountsBar}.
+
+We count label occurrences and exclude all labels that occur less than 20 times over all datasets, which results in 67 different ECG classes (down from 94).
+The class/label counts obtained will also be used later as loss function weights in training, where we will differentiate between calculating the loss with and without these weights.
+
+Three different data normalization methods have been tested independently: 
+\begin{itemize}
+	\item[\underline{min-max}] The minimum and maximum for each channel was drawn over all datapoints in each channel to rescale the data into the interval $[0, 1]$. This means for data $X$ of shape $12 \times 4500$, $12$ different minima and maxima are drawn. The calculation for each datapoint independently is given here, where $x_{i,j} \in X$, the first index $i$ is the channel and the second index $j$ is the entry in the data dimension: $$\forall i,j: x_{i, j}'=\frac{x_{i, j}-\min\limits_{d}(x_{i, d})}{\max\limits_{d}(x_{i, d})-\min\limits_{d}(x_{i, d})}$$ This method is equal to the "Min-Max Normalization" found elsewhere. 
+	\item[\underline{min-max (augmented)}] The minimum and maximum at each datapoint is drawn over all channels to rescale each datapoint into the interval $[0, 1]$. For example this means for data $X$of shape $12 \times 4500$, $4500$ different minima and maxima are drawn over all channels: $$\forall i,j: x_{i, j}'=\frac{x_{i, j}-\min\limits_{c}(x_{c, j})}{\max\limits_{c}(x_{c, j})-\min\limits_{c}(x_{c, j})}$$ This has the effect that each datapoint $x_{i,j}$ captures the relationship between all channels. We are aware that this changes the input data in a drastical manner and originally we applied this normalization method by mistake. Nevertheless the models were mostly able to train successfully and since all models had to train with the handicap, the results are still interesting to look at.
+	\item[\underline{z-Score}] Z-Score Normalization shifts the data by substracting the mean from each point and rescales it afterwards by dividing by the standard deviation. $$\forall i,j: x_{i, j}'=\frac{x_{i, j}-\mean(x_{i})}{\std(x_i)}$$ As a result the normalized data has a mean of $0$ and a standard deviation of $1$ , which is said to improve model training stability. This method resulted in the overall best model performances, especially for the baseline architectures. We used it almost exclusively for all models, besides in our experiment \autoref{sec:augmented}.
+\end{itemize}
+Principle Component Analysis has been tested but did not yield good results, feature (heart beat) extraction as in \autocite{beat_classification} has been applied but random samples suggested big variations in the extracted beat's quality. This is to say that multiple beats got extracted as one, longer beats got cut short etc. Furthermore beat extraction works best on beats that follow the normal pattern, however the most interesting ones for classification might differentiate enough to not be detected anymore and thus introduces a potentially harming bias, where interesting beats get discarded with a higher probability. Also keep in mind that data labels only exist for the whole file where multiple heart beats are present, meaning each beat on its own cannot be correctly labeled with high confidence.
+
+In addition to the beat extraction method from \autocite{beat_classification} we briefly tested outlier detection based on \autocite{Harmeling_Dornhege_Tax_Meinecke_Müller_2006} to find possibly interesting candidates for classification of single beats, but the results were varying widely between different channels and datasets. Furthermore we raise the same concern as above about missing out on beats that are not getting classified as outliers.
+
+\subsection{Train settings}
+Adam was used as optimizer with the parameters set to $lr=3e-4, \beta_1= 0.9, \beta_2=0.999, \epsilon=1e-8, weight\_decay=0$, all values were not changed for the most part. For models trained with z-score normalization, we used a learning rate scheduler with an initial learning rate of $3e-3$ for pretraining and $3e-4$ for downstream training, which multiplies the learning rate by a factor of $0.1$ after $5$ epochs with no validation loss decrease.
+
+We used a batch-size of 128, the loss function is Binary Cross Entropy with or without the class weights multiplied to the loss (obtained in \autoref{section:prep}).
+
+To allow a fair comparison between CPC and the baselines, we give access to the data for 120 epochs in total. Our baselines that utilize no pretraining can thus train for unrestricted 120 data iterations --- while CPC needs sufficient time to pretrain in order for the loss to be minimized, we chose 100 epochs for the pretraining without labels and 20 epochs with labels for training on the downstream (classification) task. Since trivially 120 epochs with labels should be better or equal than 100 epochs without labels plus 20 epochs with labels, we know that a possible performance edge for CPC is achieved due to its properties and not because it has access to the data for longer. The split 100+20 was obtained by looking at CPC loss curves, where we focused on decreasing the pretraining loss sufficiently. However we want to mention that this specific allocation is not a given and performance might increase with more downstream- and less pretrain epochs. With more GPU time, a training until convergence for all models could possibly be a better alternative. In some experiments we had to downstream train our CPC models for up to 40 epochs which we will denote where applied.
+
+\subsubsection{CPC} 
+As already mentioned The CPC architecture from the paper was trained for 100 epochs on the data without labels to find the optimal weights for the encoder network. 
+After the 100 epochs, we trained the network with the added downstream layers for the downstream task, for 20 epochs with labels available.
+
+We differentiate between two downstream training settings:
+\begin{enumerate}
+	\item All weights are updated (Gradients for both encoder architecture and classification layers are calculated and updated).
+	\item Only weight gradients for the classification layer(s) are updated. (All weight gradients in the CPC network remain untouched aka. weights are \enquote{frozen}).
+\end{enumerate}
+We make this differentiation because we want to better evaluate the CPC pretraining step, which is very important when weights are "frozen".
+
+
+\section{Evaluation}
+
+\subsection{CPC Evaluation during Pretraining}
+As an addition to the CPC loss value, we evaluate how well CPC is able to differentiate between positive and negative latent vectors during training. For that we take the maximum value indices in the logsoftmax matrix and compare those to the index with the correct latent vectors. If the indices match we add one to the count of correctly classified latents (see line \code{28} in \autoref{algo:cpcfast}). In the end we divide the sum by the number of total predicted latent vectors to receive values $\in [0,1]$ (see line \code{31} in \autoref{algo:cpcfast}).
+
+
+\subsection{Model Evaluation during Downstream Training}
+As an addition to the loss value we calculate metrics during downstream training.
+
+To better evaluate performance on a sparse probability label vector, which means only one to five values of 67 classes (in case of all datasets combined) are set to something other than 0.0, the following accuracy functions have been used during training to evaluate progress. They are based on the widely used Mean Squared Error/Brier score \autocite{BrierScoreDefinitionExamplesStatisticsHowTo-2022-02-09}, but are split into parts which measure different things:
+
+Given the class label probabilities $Y=(y_1, \ldots, y_i, \ldots, y_n)$ the prediction probabilities $\hat{Y}=(\hat{y}_1,\ldots, \hat{y}_i, \ldots, \hat{y}_n)$ with $y_i$ $\in [0,1]$ and $\hat{y}_i$ $\in [0,1]$
+\begin{equation}
+	\label{eqn:zerofit}
+	\mathbf{zero fit}(Y, \hat{Y}) = 1 - \frac{\sum_{i, \mathbf{where\;} y_i = 0}{(y_i-\hat{y}_i)^2}}{|\{\forall i, \mathrm{where\;} y_i = 0\}|}
+\end{equation}
+\begin{equation}
+	\label{eqn:classfit}
+	\mathbf{class fit}(Y, \hat{Y}) = 1 - \frac{\sum_{i, \mathbf{where\;} y_i \neq 0}{(y_i-\hat{y}_i)^2}}{|\{\forall i, \mathrm{where\;} y_i \neq 0\}|}
+\end{equation}
+\begin{equation}	
+	\label{eqn:meanfit}
+	\mathbf{mean fit}(Y, \hat{Y}) = \frac{\mathbf{zero fit}(Y, \hat{Y}) + \mathbf{class fit}(Y, \hat{Y})}{2}
+\end{equation}
+
+Equation \autoref{eqn:zerofit} is supposed to capture how well the model reproduces the probability scores for classes labels with probability $=0$. $\mathbf{zero fit}(Y, \hat{Y}) \in [0, 1]$, where $\mathbf{zero fit}(Y, \hat{Y}) = 0$ is the worst and $\mathbf{zero fit}(Y, \hat{Y}) = 1$ the best score.
+
+Equation \autoref{eqn:classfit} is supposed to capture how well the model reproduces the probability scores for classes labels with probability $\neq0$. $\mathbf{class fit}(Y, \hat{Y}) \in [0, 1]$, where $\mathbf{class fit}(Y, \hat{Y}) = 0$ is the worst and $\mathbf{class fit}(Y, \hat{Y}) = 1$ the best score.
+
+Equation \autoref{eqn:meanfit} is the mean between \autoref{eqn:zerofit} and \autoref{eqn:classfit} and captures if both goals have been met. Again it holds that $\mathbf{mean fit}(Y, \hat{Y}) \in [0, 1]$.
+
+Since the loss function is independent of the above metrics, the custom accuracy functions are solely a tool to better monitor network performance during training and do not change the weights in any way. They were used in conjunction with the loss values to determine a suitable fixed number of training epochs across all models --- the aforementioned 120 epochs for baselines and 20 epochs for cpc networks.
+
+\subsection{Evaluation after training}\label{sec:evaluation}
+
+\subsubsection{Quantitative}
+To evaluate our models we calculate \code{precision}, \code{recall}, \code{accuracy}, \code{ROC-AUC} and \code{F1}-scores \autocite{metrics} with the prediction probabilities on the test-dataset. Since the models output probability scores for each class and no binary values, which are however needed for most metrics, we need to set thresholds that define whether a class gets classified as True or False for a given datasample:
+\begin{equation}
+	class_i:=
+	\begin{cases}
+		False,& \text{if } p(class_i) < threshold_i\\
+		True,& \text{if } p(class_i) \geq threshold_i\\
+	\end{cases}
+	\label{eqn:thresh}
+\end{equation}
+
+With the decision boundary for each class set, we can count the "True Positives" = TP, "False Positives" = FP, "True Negatives" = TN and "False Negatives" = FN, which means that the data has been either classified correctly/falsely as positive/negative sample respectively (see table \ref{table:TPFP}). 
+\begin{center}
+	\begin{tabular}{ l l | c  c }
+		& & \multicolumn{2}{c}{Class is:} \\
+		& & TRUE & FALSE\\
+		\hline
+		\multirow{2}{4em}{Classified as:} & TRUE & True Positive (TP) & False Positive (FP) \\
+		& FALSE & False Negative (FN) & True Negative (TN) \\
+	\end{tabular}
+	\label{table:TPFP}
+\end{center}
+We select the "best" thresholds based on the Receiver Operating Characteristic-curve for each individual prediction class. The ROC-curve (see \autoref{plot:ROC-single}) is the False Positive Rate (FPR) plotted against the True Positive Rate (TPR) for every possible threshold in \autoref{eqn:thresh} for class $i$. The best threshold is then selected by evaluating $\underset{i}{argmax}(TPR_i-FPR_i)$. This takes place on the validation dataset and each model has their own optimal decision boundaries for each class.
+\begin{figure}[H]
+	\caption{ROC example}
+	\begin{subfigure}[t]{0.49\hsize}\centering
+		\includegraphics[width=1\linewidth]{bilder/ROC-Curve-Example.png}
+		\caption{Multiple ROC-curves with different amount of thresholds each.}
+		\label{plot:roc-multi}	
+	\end{subfigure}%
+	\hfill
+	\begin{subfigure}[t]{0.49\hsize}\centering	
+		\includegraphics[width=1\linewidth]{bilder/ROC-Area-Example.png}
+		\caption{\textbf{A}rea \textbf{U}nder \textbf{C}urve for The Receiver operating characteristic of a single class.}
+		\label{plot:ROC-single}	
+	\end{subfigure}
+\end{figure}
+
+
+The TP, FP, TN, FN counts then form the base for the following metrics (see equations \ref{metrics}):
+\begin{figure}[H]
+	\begin{equation} 
+		\begin{aligned}
+			\mathit{precision}_i &:= \frac{\mathit{TP_i}}{\mathit{TP_i}+\mathit{FP_i}} \\
+			\mathit{recall}_i &:= \frac{\mathit{TP_i}}{\mathit{TP_i}+\mathit{FN_i}} \\
+			\mathit{accuracy}_i &:= \frac{\mathit{TP_i}+\mathit{TN_i}}{\mathit{TP_i}+\mathit{TN_i}+\mathit{FP_i}+\mathit{FN_i}} \\
+			\mathit{TPR}_i &:= \frac{\mathit{TP_i}}{\mathit{TP_i}+\mathit{FN_i}}\\
+			\mathit{FPR}_i  &:= \frac{\mathit{FP_i}}{\mathit{FP_i}+\mathit{TN_i}}\\
+			\mathit{F_{1,i}} &:= 2*\frac{\mathit{precision}_i*\mathit{recall}_i}{\mathit{precision}_i+\mathit{recall}_i}\\
+			\mathit{ROC} \mathit{AUC}_i &:= \text{AUC of ROC-curve}\\%\\textbf{A}rea \textbf{U}nder the \textbf{C}urve of TPR plotted against FPR
+		\end{aligned}
+	\end{equation}
+	\caption{Different score metrics to measure performance. All score functions calculate the score for a given class $i$.}
+	\label{metrics}
+\end{figure}
+
+\begin{figure}[H]
+	\begin{equation}
+		\begin{aligned}
+			\mathbf{macroavg}(\mathbf{score}) &:=\frac{1}{N}\sum_{i}^{N}\mathbf{score}(TP_i, FP_i, TN_i, FN_i)\\
+			\mathbf{microavg}(\mathbf{score}) &:=\mathbf{score}(\mathit{TP}, \mathit{FP}, \mathit{TN}, \mathit{FN})\\
+			&=\mathbf{score}(\sum \mathit{TP_i}, \sum \mathit{FP_i}, \sum \mathit{TN_i}, \sum \mathit{FN_i})\\
+			\text{For example:}\\
+			\mathbf{macroavg}(\mathit{TPR}) &:=\frac{1}{N}\sum_{i}^{N}\frac{\mathit{TP_i}}{\mathit{TP_i}+\mathit{FN_i}}\\
+			\mathbf{microavg}(\mathit{TPR}) &:=\frac{\sum_{i}^{N}\mathit{TP_i}}{\sum_{i}^{N}\mathit{TP_i}+\sum_{i}^{N}\mathit{FN_i}}
+		\end{aligned}
+	\end{equation}
+	%		\begin{equation}
+	%			\begin{aligned}
+	%				\mathit{precision} &:= \frac{\mathit{TP}}{\mathit{TP}+\mathit{FP}} \\
+	%				\mathit{recall} &:= \frac{\mathit{TP}}{\mathit{TP}+\mathit{FN}} \\
+	%				\mathit{accuracy} &:= \frac{\mathit{TP}+\mathit{TN}}{\mathit{TP}+\mathit{TN}+\mathit{FP}+\mathit{FN}} \\
+	%				\mathit{TPR} &:= \frac{\mathit{TP}}{\mathit{TP}+\mathit{FN}}\\
+	%				\mathit{FPR}  &:= \frac{\mathit{FP}}{\mathit{FP}+\mathit{TN}}\\
+	%				\mathit{F_1} &:= 2*\frac{\mathit{precision}*\mathit{recall}}{\mathit{precision}+\mathit{recall}}\\
+	%				\mathit{AUC} &:= \text{AUC of ROC-curve}\\%\\textbf{A}rea \textbf{U}nder the \textbf{C}urve \newline of TPR plotted against FPR
+	%			\end{aligned}
+	%		\end{equation}
+	\caption{Micro- and Macro-average calculations for a given score function. Example for TPR at bottom}
+	\label{metrics-avg}
+\end{figure}
+
+To obtain comparable results we also calculate \emph{micro}- and \emph{macro}-average scores (see equation \ref{metrics-avg}). The \emph{macro}-average sums the metrics in \autoref{metrics} for every individual class and averages by dividing through the number of classes. That way every class weighs the same in the resulting average, no matter how many samples that class has. The \emph{micro}-average can be calculated by summing the TPs, FPs, TNs and FNs for all classes respectively and then calculate the metrics in \autoref{metrics}, or by weighting the calculated class scores by their fraction of the total number of samples. The micro average thus weights the score metrics with the underlying class distribution. It is important to look at both micro and macro average scores to judge a models performance --- high micro average scores but low macro average scores suggest that small classes are being overlooked by the model, which is especially disastrous considering fatal illnesses are very rare in most cases. The opposite; a high macro average- but low micro average score suggests that the models accuracy in larger parts of the data is small, which, in our case, would most likely mean that healthy patients get diagnosed with illnesses on accident.
+
+\subsubsection{Qualitative}
+Apart from giving scores that allow a basic and quick evaluation of all of our models, we show various graphics for selected models to allow a more thorough overview of the models performance. They are explained in their respective section.
+
+\section{Results}\label{sec:results}
+\subsection{Quantitative}
+\subsubsection{Baselines compared to CPC}
+
+How does the CPC architecture compare against our baseline models in a fully supervised setting?
+
+\begin{table}\centering
+	\captionof{table}{Baseline Results}
+	\resizebox{!}{0.2\textheight}{		
+		\input{tables/all_BL_std.tex}
+	}
+	\label{tbl:BL-all-class-new}
+	\caption*{\small Micro and Macro AUC-ROC scores for all baseline models. Baseline Models are trained on the downstream task for 120 epochs.}
+\end{table}
+\autoref{tbl:BL-all-class-new} shows the results for our baseline/literature models. 
+The literature architecture \code{BL\_v14}, which is tuned for timeseries classification by making use of parallel architectures with differently sized receptive fields, performs the best for both micro and macro ROC-AUC scores. This model performed the best compared to all models in general.
+
+The fully connected network \code{BL\_FCN} and the multilayer perceptron \code{BL\_MLP} both failed to learn the data beyond random guessing classes. 
+
+The best Temporal Convolutional Network is \code{BL\_TCN\_down} which uses a convolutional layer with filtersize $1$ to summarize the values in the data dimension. 
+
+At this place we also want to mention the \code{BL\_v8} model which performed well and is used as encoder network in selected CPC models later on.
+
+We compare the baseline network results to different CPC models (with the standard encoder-, context- and predictor-network), that were trained fully supervised for 120 epochs, to obtain their best possible scores within the 120 epoch limit. These results can be seen in \autoref{tbl:aucscores-cpc-nopretrain120}:
+\begin{table}\centering
+	\captionof{table}{CPC as Baseline Results}
+	\resizebox{\textwidth}{!}{	
+		\input{tables/cpc_nopretrain_nochanges_120_std.tex}
+	}
+	\caption*{\small CPC Models trained without pretraining for 120 epochs (with labels). All models shown use the standard encoder-, context-network}
+	\label{tbl:aucscores-cpc-nopretrain120}
+\end{table}
+The models trained without pretraining have overall high average scores, only falling slightly behind \code{BL\_v14} (Multi-Scale-Residual Network), which proves the CPC architecture itself is clearly capable of classifying the data sufficiently in a supervised setting. 
+
+The intersected models have a slim edge over strided models (\autoref{sec:cpc-strided}), most likely because they are less restrictive.
+
+Surprisingly the models that utilized the more expressive two layer linear network fell slightly behind in performance, which we can only explain by a higher training difficulty, as the deeper model should be able to at least match the performance of smaller models. Similar occurrences have been already observed in the past, well explained in the Deep Residual Network paper \autocite{he2015deep}.
+
+\subsubsection{CPC Downstream task with frozen weights}
+How capable is CPC's pretraining? How good are the learned representations on their own? 
+
+We want to measure how good the latent vector features are suited in our downstream task, by pretraining the model for 100 epochs without labels and downstream train for only 20 epochs with labels available. After pretraining, we are not updating any weights in the whole CPC network (CPC network is "frozen"). This is to say only the weights in the specific downstream task network (see \autoref{sec:cpc-downnetwork}) are altered during backpropagation. 
+\begin{table}\centering
+	\captionof{table}{CPC ROC-AUC scores, with no CPC layers updated during downstream training}
+	\resizebox{\textwidth}{!}{
+		\input{tables/cpc_nochanges_frozen_std.tex}
+	}
+	\caption*{ ROC-AUC scores for standard CPC models trained with pretraining for 100 and training on the downstream task for 20 epochs (with the CPC weights frozen).} %TODO: say that crossentropy = all in subset
+	\label{tbl:aucscores-cpc-pretrain-frozen}
+\end{table}
+The results in \autoref{tbl:aucscores-cpc-pretrain-frozen} show good results, however it is clear that they fall behind in performance compared to the models who had access to the labeled data for 120 epochs. We observe that the two layered linear network is the best performing downstream model, suggesting that the learned latent vectors are not fully linearly separable for this downstream task. The added complexity from introducing a second layer helped classifying the learned latent representations, in contrast to the networks trained purely on the downstream task, where the added complexity lead to lower scores.
+
+Additionally the strided models show lower macro scores.
+
+In comparison we show the results for the same models with randomly initialized weights and no pretraining whatsoever, as to prove the pretraining is actually relevant and the data is not just classifiable with random weights and a single/two layer(s) within 20 epochs of training time: \autoref{tbl:aucscores-cpc-nopretrain-frozen20}. 
+
+As expected the models fail to satisfactorily classify the ecg-data, which becomes clear when looking at the macro ROC-AUC scores. The high micro scores suggest that one layer is still enough to learn the big parts of the data somehow, where one has to keep in mind that e.g. the biggest class "Sinus Rythm" is included in $\approx50\%$ of all ecg-files, which means correctly predicting this class has a big positive impact on micro average scores. (Reminder: see \autoref{fig:ClassCountsBar} for all classes.)
+\begin{table}\centering
+	\captionof{table}{CPC ROC-AUC scores, random weight initialization, no CPC layers updated during downstream training}
+	\resizebox{\textwidth}{!}{
+		\input{tables/cpc_nochanges_frozen_nopretrain_std.tex}
+	}
+	\caption{ROC-AUC scores for standard CPC models without pretraining (random weights); trained for 20 epochs on the downstream task (with the CPC weights frozen)}
+	\label{tbl:aucscores-cpc-nopretrain-frozen20}
+\end{table}
+Both table \autoref{tbl:aucscores-cpc-pretrain-frozen} and \autoref{tbl:aucscores-cpc-nopretrain-frozen20} together suggest that the features learned by CPC in an unsupervised fashion are useful for the supervised downstream task, even if the network is restricted by making weight updates only in a previously untrained new layer, which fits the extracted features to the classes.
+
+\subsubsection{CPC Downstream task with all weights updated}
+Can the performance be improved by updating the weights in the whole architecture?
+
+To answer this question, \autoref{tbl:aucscores-cpc-pretrain-unfrozen} shows yet another way of training the CPC architecture: pretrain the representations for 100 epochs and then, when training on the downstream task, do not freeze the weights in the CPC network layers. We assume, compared to the frozen model, this would lead to the better overall prediction accuracy, because the CPC pretraining is utilized in order to train the autoregressive architecture and then all weights are fine-tuned to optimize the classification loss.
+
+As expected we observe that most models receive a slight performance boost compared to the "frozen" model variants and again the two layer downstream network has better scores overall. 
+For the models however, that are trained with fewer latent vectors (\code{cpc\_intersect\_manylatents}) and use "crossentropy" non-strided, we observe that the complete opposite is the case: While the micro ROC-AUC scores are still in line with the other models, the macro average scores are worse than the models that did not have their weights updated. We assume the cpc objective lead to a specific latent representation that were in an opposite direction of the downstream loss function. With more training epochs, we assume that the model will converge towards the results of \autoref{tbl:aucscores-cpc-nopretrain120}, assuming the model can get out of the suboptimal local minimum. We cannot completely rule out overfitting, but we think it is unlikely in this case as the micro average scores are also lower than before.
+%To explain the lower two linear layer performance in the models without pretrain we further argue that the added flexibility hurt Interestingly, comparing these results the same models that have been trained without  to no pretrain two layer < pooling. arguemtn source: difficulty to train latent representations if downstream too flexible in no pretrain.
+\begin{table}\centering
+	\captionof{table}{CPC ROC-AUC scores, with all layers updated in downstream training}
+	\resizebox{\textwidth}{!}{
+		\input{tables/cpc_nochanges_unfrozen_std.tex}
+	}
+	\caption*{\small ROC-AUC scores for CPC models trained with pretraining for 100 epochs and training on the downstream task for 20 epochs with the CPC weights also updated.}
+	\label{tbl:aucscores-cpc-pretrain-unfrozen}
+\end{table}
+
+
+
+
+
+\subsubsection{Low label availability}\label{section:lowlabel}
+Under what circumstances is CPC especially efficient to use?
+
+To further investigate the strengths of representation learning we reproduce an experiment from \autocite{cpcdataefficient} that omits labeled data in the training process to simulate data scarcity. Since the representations learned by CPC only rely on unlabeled data, a clear advantage for all CPC models compared to the baselines, which cannot make use of unlabeled data, can be expected. 
+
+We start by utilizing the old train-, validation- and test-splits and make changes to the training split by taking a fixed fraction of each class. For this experiment, class label proportions of $\{0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.05, 0.01, 0.005, 0.001\}$ have been desired to achieve. Since the data can have multiple labels per sample, it is difficult or sometimes even impossible to exactly match the desired fractions for all classes, hence why the class distribution will be approximate. Our algorithm uses a greedy approach where all files are put into \enquote{class buckets} for each of the files corresponding class. Afterwards a random file is taken from each class bucket ordered by the buckets size, starting with the smallest one. If a file gets randomly drawn, it is removed from all other buckets. This gets repeated until all the desired fractions for each bucket are met. Code can be found in \code{experiment/create\_fewer\_labels\_data}.
+
+
+Again, like in the other experiments, we train 120 epochs per baseline model, while CPC trains only for 20 epochs on the labeled data plus 100 epochs on ALL of the original training dataset without the labels.
+
+Finally we measure micro and macro ROC-AUC scores on the same test dataset and plot the results. Instead of the desired proportion we use the actual fraction of total data files used as x-axis, because again, multiple classes are possible per sample, and the actual fraction of data used might differ from the desired proportions. The results for 20 epochs on cpc models and 120 epochs on baseline models can be seen in \autoref{plot:low-label}. As one can see more data $\equiv$ better score in general, however the CPC model scores are lower than in baseline models, where few labels are given. The lower CPC ROC-AUC score is contrary to what is to be expected since representation learning makes use of the complete dataset without labels first, hence it should perform considerably better in tasks that provide only few labeled data.
+\begin{figure}
+	\caption{Test scores for different models trained with a fraction of data labels} %TODO: make bigger maybe
+	\begin{subfigure}[t]{0.99\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/2lowlabel-micro-20.png}%bilder/low_label_availability_classweightsmicro.png
+		\caption{Micro average ROC-AUC score. Dashed Line: CPC models, Full Line: Baselines. Baseline-epochs: 120, CPC-epochs: 20}
+		\label{fig:low-label-micro}	
+	\end{subfigure}
+
+	\begin{subfigure}[t]{0.99\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/2lowlabel-macro-20.png}%
+		\caption{Macro Average ROC-AUC score. Dashed Line: CPC models, Full Line: Baselines. Baseline-epochs: 120, CPC-epochs: 20}
+		\label{fig:low-label-macro}	
+	\end{subfigure}
+	\label{plot:low-label}
+\end{figure}
+
+To investigate this counter-intuitive behavior we train selected CPC models for 50 epochs instead of 20. We visualize the scores again in \autoref{plot:low-label-more} and this time see results closer to what we expected, where CPC models have a slight advantage over baseline models in very low label regimes. Interestingly the performance advantage quickly fades as more labels are given, no matter if trained for 20 or 50 epochs. Our hypothesis is that each class has to be shown to the model a specific number of times at least to successfully fit the model to the classification problem. By using less and less labels, while also limiting the CPC network to training for only 20 epochs, this hypothetical threshold, where the loss is not decreased enough for each individual class, must have been reached. We conclude that CPC is able to slightly outperform non-representation learning networks, where only very few labels are available, but needs sufficient epochs to do so. 
+
+Nevertheless we are astounded how well the baselines performed in general and suspect that more tests on different data were few labels are available should be conducted in the future. 
+\begin{figure}
+	\caption{Test scores for different models trained with a fraction of data labels (more epochs)}
+	\begin{subfigure}[t]{0.99\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/2lowlabel-micro-50.png}%
+		\caption{Micro average ROC-AUC score. Dashed Line: CPC models, Full Line: Baselines. Baseline-epochs: 120, CPC-epochs: 50}
+		\label{fig:low-label-micro-more}	
+	\end{subfigure}%
+	\hfill	
+	\begin{subfigure}[t]{0.99\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/2lowlabel-macro-50.png}%
+		\caption{Macro Average ROC-AUC score. Dashed Line: CPC models, Full Line: Baselines. Baseline-epochs: 120, CPC-epochs: 50}
+		\label{fig:low-label-macro-more}	
+	\end{subfigure}
+	\label{plot:low-label-more}
+\end{figure}
+
+Furthermore this experiment shows one of representation learnings biggest strength: time efficiency. While all the baseline models needed retraining for every single training dataset with 120 epochs each, totaling to more than 24 hours wall clock training time, the CPC model only needed the initial 100 epochs \textbf{that is shared amongst all datasets}, plus 20 (or 50) additional training epochs, greatly improving training time by a factor of almost 6 (or >2). Apart from low label availability this of course also the case for different downstream tasks, which is a great opportunity for saving power and time or for neural net enthusiasts that do not have access to capable hardware.
+
+\subsubsection{Experiment: Training on Augmented Data} \label{sec:augmented}
+Under what circumstances is CPC especially efficient to use?
+
+We wanted to test whether CPC and the Baseline models are able to correctly predict classes with heavily augmented data, which might be useful for very noisy or even partially broken data. For this we applied the "min-max (augmented)" normalization function on the ecg data and trained the models after. \autoref{fig:ecg-augmented} shows the augmented data.
+\begin{figure}[h]
+	\caption{Normalized ECG example from beginning \autoref{fig:ECGBasic}}
+	\begin{subfigure}[t]{0.48\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/ecg-example-minmax0.png}%
+		\caption{Correct Min-Max Normalization}
+	\end{subfigure}%
+	\hfill	
+	\begin{subfigure}[t]{0.48\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/ecg-example-augmented0.png}%
+		\caption{Augmented Min-Max Normalization}
+	\end{subfigure}
+	\label{fig:ecg-augmented}
+\end{figure}
+
+The following tables show the results for training (and pretraining) multiple baseline and CPC-networks with different training settings on the augmented data. Note that for this section, we used slightly different downstream CPC networks compared to prior results (we refer to \autoref{cpc-architecture} for their description).
+
+Table \ref{tbl:aucscores-avg-bl-class-stab} and table \ref{tbl:aucscores-avg-bl-noclass-stab} show the ROC-AUC scores for all the trained baseline models, while table \ref{tbl:aucscores-avg-cpc-class-stab} and table \ref{tbl:aucscores-avg-cpc-noclass-stab} show the AUC scores for all trained cpc models. The left shows the results with class weights utilized in the loss calculation, while the right shows all scores for the same models without the class weights. We make this differentiation, because the macro average scores, which are normally improved by factoring in the class weights during training, were heavily degraded by making use of this method. We suspect the different normalization made the training process more unstable and the added class-weights, which alter the loss directly, contribute to that already unstable training.
+\begin{figure}[H]
+	\captionof{table}{Baseline ROC-AUC scores}
+	\begin{subfigure}[t]{0.49\hsize}\centering	
+		\input{tables/AUC-baseline-classweights.tex}
+		\caption{Models trained with class weights in the loss function.}
+		\label{tbl:aucscores-avg-bl-class-stab}	
+	\end{subfigure}%
+	\vline
+	\begin{subfigure}[t]{0.49\hsize}\centering
+		\input{tables/AUC-baseline-noclassweights.tex}
+		\caption{Models trained without class weights in the loss function.}
+		\label{tbl:aucscores-avg-bl-noclass-stab}	
+	\end{subfigure}
+	\label{tbl:aucscores-avg-bl-stab}
+\end{figure}
+\begin{figure}[H]
+	\captionof{table}{CPC ROC-AUC scores} %TODO: use new table layout (produce plots)
+	\begin{subfigure}[t]{0.49\hsize}\centering	
+		\input{tables/AUC-cpc-classweights.tex}
+		\caption{Models trained with class weights in the loss function.}
+		\label{tbl:aucscores-avg-cpc-class-stab}
+	\end{subfigure}
+	\vline
+	\begin{subfigure}[t]{0.49\hsize}\centering %\captionof{table}{CPC AUC scores without class\_weights}	
+		\input{tables/AUC-cpc-noclassweights.tex}
+		\caption{Models trained without class weights in the loss function.}
+		\label{tbl:aucscores-avg-cpc-noclass-stab}	
+	\end{subfigure}	
+	\caption*{\small Legend:\newline
+		\hl{m:all} All latents are used as negative examples in the cpc loss.
+		\hl{m:same} Latents only from the same timestep are used as negative examples.
+		\hl{linear/cnn/twolinear/latent\_maximum} The used downstream architecture.
+		\hl{L} Latent vectors are used for predicting the class labels.
+		\hl{C} Context vector is used for predicting the class labels.
+		\hl{frozen} The weights are not updated in the cpc network layers during downstream task.
+		\hl{strided} Disjoint window data encoder is used instead.}
+	\label{tbl:aucscores-avg-cpc-stab}
+\end{figure}
+%(TODO: maybe insert scatter plot? What is X?)
+We see that CPC overall performs the best in terms of ROC-AUC score, although labels have not been used as often as in the baseline models. Interesting to see is also that the baseline models cannot cope well with the class weights added to the loss function: Most models cannot confidently surpass even an ROC-AUC area of 0.5, which is the threshold for random guessing. However we admit that the performance drop for the baseline models with the class weights added is suspiciously high and might suggest other factors such as non ideal training settings, that affect weighted models only, are the root of this problem. 
+
+Having said this, all CPC models, with only few exceptions, do not see this degradation in performance, meaning they fit all classes in the augmented dataset. As a result we observe better macro average values in some cases with the weights added to the loss function.
+The overall badly performing baselines and the few CPC models that completely fail to classify the augmented data, suggest that the training for this task is extremely unstable.
+
+To determine whether this difference in performance is caused by the pretraining step or the architecture itself we additionally train a few new CPC models fully supervised without the pretraining step for 120 epochs. 
+\begin{figure}
+	\captionof{table}{Average CPC ROC-AUC scores, no pretraining}
+	\begin{subfigure}[t]{0.49\hsize}\centering
+		\input{tables/AUC-cpc-endtoend-noclassweights.tex}
+		\caption{No class weights were used in loss function.}
+		\label{tbl:aucscores-cpcno-pretrain-noclass-stab}
+	\end{subfigure}
+	\begin{subfigure}[t]{0.49\hsize}\centering
+		\input{tables/AUC-cpc-endtoend-classweights.tex}
+		\caption{Class weights were used in loss function.}
+		\label{tbl:aucscores-cpcno-pretrain-class-stab}
+	\end{subfigure}
+	\caption*{\small ROC-AUC scores for CPC models trained without pretraining, trained on the downstream task for 120 epochs. Legend: (like in \autoref{tbl:aucscores-avg-cpc-class-stab})}
+	\label{tbl:aucscores-cpcno-pretrain-stab}
+\end{figure}
+Comparing \autoref{tbl:aucscores-cpcno-pretrain-stab} to \autoref{tbl:aucscores-avg-cpc-stab}, the non-strided version of the model that used the context, did not work as good as the same model that was pretrained with the CPC-loss, especially the macro average degraded substantially. These results are in line with the baseline results in the stability experiment already observed. We argue that with heavily augmented/noised data, the CPC pretraining step is crucial to correctly learn the latent representations in the CPC architecture.
+
+Interestingly, the \enquote{strided} CPC models do not exhibit such a big performance gap compared to the pretrained models and work well for both micro- and macro-average scores. We hypothesize that, even without pretraining, the \enquote{strided} architecture is easier to train due to fewer latent vectors being calculated, making it easier for downstream task networks.
+
+Table \ref{tbl:aucscores-cpc-pretrain-unfrozen-noclassweights-stab} and Table \ref{tbl:aucscores-cpc-pretrain-unfrozen-classweights-stab} show yet another way of training the CPC architecture: pretrain the representations for 100 epochs and then, when training on the downstream task, do not freeze the weights in the CPC network layers:
+\begin{figure}[H]
+	\captionof{table}{CPC ROC-AUC scores, with all layers updated in downstream training}
+	\begin{subfigure}[t]{0.48\textwidth}
+		\input{tables/AUC-cpc-unfrozen-noclassweights.tex}
+		\caption{No class-weights are used.}
+		\label{tbl:aucscores-cpc-pretrain-unfrozen-noclassweights-stab}
+	\end{subfigure}
+	\vline
+	\begin{subfigure}[t]{0.48\textwidth}
+		\input{tables/AUC-cpc-unfrozen-classweights.tex}
+		\caption{Class-weights are used.}
+		\label{tbl:aucscores-cpc-pretrain-unfrozen-classweights-stab}
+	\end{subfigure}
+	\caption*{\small ROC-AUC scores for CPC models trained with pretraining for 100 epochs and training on the downstream task for 20 epochs with the CPC weights also updated.  Legend: (like in \autoref{tbl:aucscores-avg-cpc-class-stab})}
+	\label{tbl:aucscores-cpc-pretrain-unfrozen-stab}
+\end{figure}
+At first one would assume this would lead to the best overall prediction accuracy, because the CPC pretraining is utilized in order to train the autoregressive architecture and then all weights are fine-tuned to optimize the classification loss. Yet we observe the opposite: while the micro-average ROC-AUC scores are still in line with the other models, the macro-average scores are the overall worst, at least in the training with added class weights. We assume the cpc objective lead to a specific latent representation that were in an opposite direction of the downstream loss function and acted like a bad weight initialization. With more training epochs, we assume that the model will converge towards the results of \autoref{tbl:aucscores-cpcno-pretrain-class-stab}, assuming the model can get out of the suboptimal local minimum. A different explanation is that the added flexibility allowed the model to more easily overfit on the training data.
+
+Although the CPC models outperformed all baseline architectures (\autoref{tbl:aucscores-avg-bl-stab} vs. \autoref{tbl:aucscores-avg-cpc-stab}), which suggests that the pretraining step seems to help train the models, we cannot confidently say that pretraining is always helpful for augmented data because the strided CPC networks still perform well in a setting with no pretraining at all (see \autoref{tbl:aucscores-cpcno-pretrain-stab}), while some CPC models could not be succesfully trained even with pretraining. Since strided and non-strided models only vary in architecture and not how they are trained, it is possible that difference in the architecture lead to good performance and not the pretraining per se. Nevertheless we suspect that the CPC pretraining leads more easily to overall good representations if the data is difficult to classify, and that too much freedom during the difficult downstream task leads to overfitting or unstable training, which can be followed from \autoref{tbl:aucscores-avg-cpc-stab} vs. \autoref{tbl:aucscores-cpc-pretrain-unfrozen-stab}. We suspect the strided models get around overfitting because of easier model convergence. In summary we argue that the stability experiment results are inconclusive but they hint at that CPC models and their pretraining make finding the latent features easier, in unstable training environments.
+
+
+\subsubsection{Additional changes}\label{sec:additionalchanges}
+Can the original architecture be improved?
+
+Next we take a look at the additional changes we made to the CPC architecture to allow a more flexible use or increase performance. In some cases we relaxed our downstream epoch limit from 20 to 40, because we are not directly compare to baseline networks and in order to more thoroughly test an architectures capabilities. We note that this increases the difficulty of comparing those models to the ones that only trained for 20 epochs above, but if the performance is still lower when trained for 40 epochs, we are more certain that this specific change in the architecture was a step in the wrong direction.
+
+Additionally please note that for certain categories like "Downstream Model", we will only display the models with the highest macro average scores. For example a model that has been trained with \code{cpc\_downstream\_latent\_average} vs \code{cpc\_downstream\_latent\_maximum} with otherwise equal settings, will only show the better model with the associated scores. Also all models use \code{cpc\_intersect\_manylatents} (see \autoref{sec:fewerlatentvectors}) and --- besides their one changed module --- still the standard encoder-, context- and predictor network \code{cpc\_encoder\_v0}, \code{cpc\_autoregressive\_v0} and \code{cpc\_predictor\_v0}. This restriction is necessary since some models require to be trained with \code{cpc\_intersect\_manylatents} in order to function.
+
+\autoref{tbl:aucscores-cpc-cross40} can be used as a reference for what is possible using all standard modules with 40 epochs (with \code{cpc\_intersect\_manylatents}).
+\begin{table}\centering
+	\captionof{table}{CPC ROC-AUC scores, 40 Downstream Epochs}
+	\resizebox{\textwidth}{!}{
+		\input{tables/cpc_nochanges_40epochs_std.tex}
+	}
+	\caption*{\small ROC-AUC scores for CPC models trained with pretraining for 100 epochs and training on the downstream task for 40 epochs.}
+	\label{tbl:aucscores-cpc-cross40}
+\end{table}
+
+\paragraph{Normalized Latent Vectors}
+\autoref{tbl:aucscores-cpc-normalized} shows the results for models that were trained with normalized latent vectors (see \autoref{sec:normalizedlatents} for details). We see that even with more epochs the scores are overall lower, for both micro and macro average, indicating this change most likely is not beneficial. We suspect that normalizing the vectors restricted the model too much.
+\begin{table}\centering
+	\captionof{table}{CPC ROC-AUC scores: normalized latents}
+	\resizebox{\textwidth}{!}{
+		\input{tables/cpc_somechanges_normalized_both.tex}
+	}
+	\caption*{\small ROC-AUC scores for CPC models trained with pretraining for 100 epochs and training on the downstream task for 20 or 40 epochs (both frozen/updated). Latent vectors are always normalized}
+	\label{tbl:aucscores-cpc-normalized}
+\end{table}
+
+\paragraph{Encoder like Baseline\_v8}
+In \autoref{tbl:aucscores-cpc-likev8} we see the results for models that were trained with \code{cpc\_encoder\_likev8}, which is a clone of the baseline model \code{BL\_v8}. \code{cpc\_encoder\_likev8} outputs 147 latent vectors as opposed to 26 like the standard architecture. We report lower scores overall.
+
+Nevertheless we want to mention that generating more latent vectors is a trait which is useful in some tasks, as for example later on in \autoref{sec:explainingclasses}.
+\begin{table}\centering
+	\captionof{table}{CPC ROC-AUC scores: \code{cpc\_encoder\_likev8}}
+	\resizebox{\textwidth}{!}{
+		\input{tables/cpc_somechanges_likev8.tex}
+	}
+	\caption*{\small ROC-AUC scores for CPC models trained with pretraining for 100 epochs and training on the downstream task for 20 or 40 epochs (both frozen/updated). \code{cpc\_encoder\_likev8} is always used as an encoder}
+	\label{tbl:aucscores-cpc-likev8}
+\end{table}
+
+\paragraph{Hidden State Context Network}
+We look at the results of our networks where \code{cpc\_autoregressive\_hidden} is used, which uses the hidden state as a context for the next step latent predictions. The model that was trained for 40 epochs with all weights updated yielded the best results, even surpassing the macro-average score from the best model in the comparison \autoref{tbl:aucscores-cpc-cross40}. Interestingly the score got degraded for the model with the weights frozen, making this context network useful only situational.
+\begin{table}\centering
+	\captionof{table}{CPC ROC-AUC scores: \code{cpc\_autoregressive\_hidden}}
+	\resizebox{\textwidth}{!}{
+		\input{tables/cpc_somechanges_hidden.tex}
+	}
+	\caption*{\small ROC-AUC scores for CPC models trained with pretraining for 100 epochs and training on the downstream task for 20 or 40 epochs (both frozen/updated). \code{cpc\_autoregressive\_hidden} is always used as context network}
+	\label{tbl:aucscores-cpc-hidden}
+\end{table}
+
+\paragraph{No Context Network}
+For the network that did not use the context for predicting future latents, and instead a TCN trained to predict next-step latents directly, the results are overall a bit lower. Despite not displayed here, we mention that the CPC accuracy during pretraining was higher than for any other model, with exemption of models trained with the 'same' sampling method and all standard settings, indicating that the respresentations were more easily distinguishable for the different entries in the batch.
+\begin{table}[h]\centering
+	\captionof{table}{CPC ROC-AUC scores: \code{cpc\_predictor\_nocontext}}
+	\resizebox{\textwidth}{!}{
+		\input{tables/cpc_somechanges_nocontext.tex}
+	}
+	\caption*{\small ROC-AUC scores for CPC models trained with pretraining for 100 epochs and training on the downstream task for 20 or 40 epochs (both frozen/updated). \code{cpc\_predictor\_nocontext} is always used as the latent predictor}
+	\label{tbl:aucscores-cpc-nocontext}
+\end{table}
+Although the results were slightly less accurate, we note that it is still interesting to see that the context network + single linear layers for predicting future latents is not a given and can be exchanged for different architectures.
+
+\subsection{Qualitative}
+\subsubsection{Finding the best Hyperparameters with Parallel Coordinates}
+What are the best settings/hyperparameters for CPC?
+
+To better evaluate what model specific baseline hyperparameters lead to a good test performance we make use of a so called \enquote{Parallel Coordinates} plot which can visualize high-dimensional datasets. It consists of one x-axis that uses a categorical label instead of a number at each step with no specific order and multiple differently ranged y-axes, one for each categorical label. Every datasample is drawn as line in a color specific to one of the datasamples attributes. In short, parallel coordinate plots visualize tables by using the column-headers as x-axis and draw each row as a line with a color specific to one selected column.
+
+Since we want to figure out what hyper parameters influence our micro and macro ROC-AUC score in a positive way, both will be used individually as color in the plot, while some of the hyperparameters will be shown on the x-axis. We summarize list-like hyperparameters such as multiple strides or kernel-sizes as a sum in order to visualize them. For strides especially, a product could be used instead to deliver more accurate results, which is due to the fact that strides have a multiplcative impact on input data, while kernel-sizes are closer to additive. The widely different values however made the plot unreadable with big products in our case. The resulting plot can be seen in \autoref{fig:bl-parcoords-micro} and \autoref{fig:bl-parcoords-macro}. While it is difficult to judge most hyperparamters with confidence based on this plot, we can see that the final layer choice seems to have a big impact on performance in our baseline models. There, approach \ref{desc:en4} --- which downsamples the models output with a convolutional layer before feeding it to the final linear layer --- seems to achieve the overall best performance.
+\begin{figure}[H]
+	\caption{Parallel Coordinates Plot for all trained baseline networks from \autoref{tbl:aucscores-avg-bl-class-stab}.}
+	\begin{subfigure}[t]{0.95\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/bl-attributes-parallelcoordsmicro.png}
+		\caption{The color is the \textbf{micro} ROC-AUC score}
+		\label{fig:bl-parcoords-micro}	
+	\end{subfigure}%
+	
+	\begin{subfigure}[t]{0.95\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/bl-attributes-parallelcoordsmacro.png}
+		\caption{The color is the \textbf{macro} ROC-AUC score}
+		\label{fig:bl-parcoords-macro}	
+	\end{subfigure}
+\end{figure}
+
+For the trained CPC models we use a different implementation obtained from Github\footcite{https://github.com/jraine/parallel-coordinates-plot-dataframe/blob/master/parallel_plot.py}, where the lines are curved to better visualize binary values. \autoref{fig:cpc-parcoords-macro} and \autoref{fig:cpc-parcoords-micro} show the parallel coordinate plots for all of our trained CPC models. This also includes experiments like "low label availability".
+
+Although more CPC models have been evaluated in the CPC parallel coordinates plots, they are less conclusive regarding model hyperparameters and performance relationship, because there are both good and bad AUC-scores for most hyperparameters. An exemption of this might be normalizing the latent vectors during training, which results in a worse macro AUC score. Additionally it seems to be beneficial to utilize the context vector, which can be again seen in the macro AUC score.
+
+\begin{figure}[H]
+	\caption{Parallel Coordinates Plot for all trained baseline networks from \autoref{tbl:aucscores-avg-bl-class-stab}.}
+	\begin{subfigure}[t]{\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/lowlabel-paarcords-cpc-micro.png}
+		\caption{The color is the \textbf{micro} ROC-AUC score}
+		\label{fig:cpc-parcoords-micro}	
+	\end{subfigure}
+	\begin{subfigure}[t]{\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/lowlabel-paarcords-cpc.png}
+		\caption{The color is the \textbf{macro} ROC-AUC score}
+		\label{fig:cpc-parcoords-macro}	
+	\end{subfigure}
+\end{figure}
+
+
+\subsubsection{Latent/Context t-SNE representations}
+Does CPC learn visually verifiable useful latent representations?
+
+In an attempt to visually verify the usefulness of the learned latent data representations we separately perform a dimensionality reduction from the 128 valued latent vectors and the 256 valued context vectors into a two dimensional space. This is done by taking one of the above trained CPC networks (with the settings use\_weights, strided, unfrozen, cpc\_downstream\_cnn in this case) and saving all latent and context vectors for the whole dataset. Afterwards we use t-SNE \autocite{JMLR:v9:vandermaaten08a} to embed the vectors into two dimensions, the results are visualized in a scatter plot where the embedded dimensions are used as x- and y-axis. Each sample is colored according to its label in the data. Since the data has multiple possible labels per sample, which makes distinct class coloring difficult, we opted to use binary coloring --- if class $x$ is present in the data assign $1$, otherwise assign $0$ to the datapoint. This is done for all classes.
+
+In order to be able to better judge if the colored embeddings have meaning, we added a scatter plot with randomized labels as well. An example for this can be seen in \autoref{plot:tsne-context} which shows all context vector embeddings, with the labels for class $426783006$ (normal sinus rhythm). Although the data points were not fully separated, a clear distinction to the random plot can still be made (see mostly blue big area on the left). The same goes for \autoref{plot:tsne-latent} which shows all latent vector embeddings instead. There the positive labels seems to form a border around the data, the negative labels are mostly centered in the middle.
+\begin{figure}[H]
+	\caption{Two dimensional t-SNE embeddings of all context vectors}
+	\begin{subfigure}[t]{0.48\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/tsne-context-41.png}
+		%\caption{t-SNE embedding of all context vectors (one for each patient). Legend: }
+		\label{fig:tsne-context-normal}	
+	\end{subfigure}%
+	\hfill	
+	\begin{subfigure}[t]{0.48\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/tsne-context-(random).png}		
+		\label{fig:tsne-context-random}	
+	\end{subfigure}
+	\caption*{t-SNE embedding of all context vectors (one for each patient). Left:  Data points are colorized according to their true labels. Right: The colors are randomly assigned.}
+	\label{plot:tsne-context}
+\end{figure}
+\begin{figure}[H]
+	\caption{Two dimensional t-SNE embeddings of all latent vectors}
+	\begin{subfigure}[t]{0.48\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/tsne-latent-41.png}%
+		%\caption{t-SNE embedding of all latent vectors (nine for each patient). Legend: $0 :=$ no normal beats (class $x:= 426783006$) are in the recordings labels, $1:=$ normal beats are in the recordings labels}
+		\label{fig:tsne-latents-normal}	
+	\end{subfigure}%
+	\hfill	
+	\begin{subfigure}[t]{0.48\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/tsne-latent-(random).png}%
+		%\caption{t-SNE embedding of all latent vectors (nine for each patient). The labels $0$ and $1$ are randomly assigned.}
+		\label{fig:tsne-latents-random}
+	\end{subfigure}
+	\caption*{t-SNE embeddings of all latent vectors (nine vectors per patient). Left: Data points are colorized according to their true labels. Right: The colors are randomly assigned.}
+	\label{plot:tsne-latent}
+\end{figure}
+
+\autoref{plot:tsne-context-all} and \autoref{plot:tsne-latent-all} show the embeddings with the respective point coloring for 64 of 67 classes, denoted in the upper right of each scatter plot. The plots are ordered by their ROC-AUC-score from top-left to bottom-right, each score visualized as background color. Especially for smaller classes (fewer yellow dots) it is difficult to judge how well the data is clustered, but there are cases were clusters are clearly distinguishable. Take for example classes $427084000$ (sinus tachycardia) and $426177001$ (sinus bradycardia) in \autoref{plot:tsne-context-all}, which are on the opposite site in the embedding and also have a high ROC-AUC-score. Interestingly sinus tachycardia means that the heart beat is faster than usual (over 100bpm \autocite{SinusTachycardiaCedarsSinai-2021-09-07}) and sinus bradycardia that the heart beats slower than usual (under 60bpm \autocite{SinusBradycardiaCedarsSinai-2021-09-07}), which means the classes are in fact conflicting and very unlikely to occur together as final diagnosis on the same patient. The same classes are also fairly spatially divided with the latent embeddings \autoref{plot:tsne-latent-all}, however not as clearly as with the context embeddings. This might be due to the fact that a patient diagnosed with sinus tachycardia might still have a few slow beats or vice versa with sinus bradycardia. Also since the tested model relies on the context vector for the final prediction, the classes need to be more distinguishable in the context vector space than the latent vector space, which could explain the better spatial division. Additionally since nine times more latent data points are generated, the two dimensional embedding could be harder to find for t-SNE.
+
+In contrast to spatially divided clusters there also seem to be class clusters which are more or less equivalent. In \autoref{plot:tsne-latent-all} take for example classes $6374002$ (Bundle Branch Block) and $164909002$ (Left Bundle Branch Block), which look very similar apart of their sizes, and are also very similar from a medical standpoint.
+\begin{figure}[H]
+	\includegraphics[height=\linewidth, angle=90]{bilder/tsne-context-all(ordered by auc).png}
+	\caption[Two dimensional t-SNE embeddings of all context vectors]{t-SNE embedding of all context vectors (one for each patient) for 64 of 67 classes. Legend: number in top right denotes class name, yellow dot means class name is part of the recording's labels. Background color is the AUC score per class, sorted descending}
+	\label{plot:tsne-context-all}
+\end{figure}
+\begin{figure}[H]\centering
+	\includegraphics[height=\linewidth, angle=90]{bilder/tsne-latent-all(ordered by auc).png}
+	\caption[Two dimensional t-SNE embeddings of all latent vectors]{t-SNE embedding of all latent vectors (nine for each patient) for 64 of 67 classes. Legend: number in top right denotes class name, yellow dot means class name is part of the recording's labels. Background color is the AUC score per class, sorted descending}
+	\label{plot:tsne-latent-all}
+\end{figure}
+
+\begin{figure}[H]\centering
+	\includegraphics[height=\linewidth, angle=90]{bilder/tsne-context-all(ordered by auc)new.png}
+	\caption[Two dimensional t-SNE embeddings of all context vectors (different model)]{t-SNE embedding of all context vectors (one for each patient) for 64 of 67 classes. Context obtained with frozen model. Legend: number in top right denotes class name, yellow dot means class name is part of the recording's labels. Background color is the AUC score per class, sorted descending}
+	\label{plot:tsne-context-all-frozen}
+\end{figure}
+\begin{figure}[H]\centering
+	\includegraphics[height=\linewidth, angle=90]{bilder/tsne-latent-all2(ordered by auc).png}
+	\caption[Two dimensional t-SNE embeddings of all latent vectors (different model)]{t-SNE embedding of all latent vectors (26 for each patient) for 64 of 67 classes. Latents obtained with frozen model. Legend: number in top right denotes class name, yellow dot means class name is part of the recording's labels. Background color is the AUC score per class, sorted descending.}
+	\label{plot:tsne-latent-all-frozen}
+\end{figure}
+
+We compare prior results of a strided model where all weights are updated, with the t-SNE embeddings of a non-strided network that was trained with frozen weights. As a result the learned latent representations obtained by only the CPC loss are formed completely independent of labeled data. The t-SNE embeddings will show how/if the latents are dividable into clusters and if the highlighted classes are comparably separable. 
+
+\autoref{plot:tsne-context-all-frozen} shows the t-SNE embedding of the context vectors, while \autoref{plot:tsne-latent-all-frozen} shows the embedding for all latent vectors. Comparing the different model's context plots, we notice that the true samples of that specific class (yellow dots) seem to be less grouped and more spread throughout the plot. The distinction we made in the first plot between class sinus tachycardia and sinus bradycardia cannot be made anymore. We suspect that the training with updated weights is important for building a context that is focused on predicting class labels, rather than the next latent steps.
+
+On the other side, for the latent embedding we observe that there seems to be a way finer clustering in general, which are however not restricted to class labels. We argue that the latent representations formed in the model with frozen weights have distinct properties partly independent of their class label in the data, which is not surprising as the CPC loss is minimized without labels. The class labels seem to appear predominantly in few selected clusters which suggests that each class has its own defining properties.
+
+In conclusion the context vectors of the strided model with updated weights seems to be more suited for classification, while the latent representations of the frozen non-strided model appear to be of higher quality and more capable of identifying unique data properties, which are focused on specfic classes only sporadically.
+This suggests that CPC finds general latent representations which encode the data's properties and that during the downstream task those representations get fine tuned for classification. In the case of the strided model those representations were less separable in a lower dimension, where It's not entirely clear if these properties got imperfectly "mixed" into classes, or if the strided model's latent representations have less distinct properties in general.
+
+\subsubsection{Transforming Predictions Scores with Model Thresholds}
+After predictions for the ECG-data have been made it is important to visualize them correctly, to give an idea of what class labels are considered true
+Let $p$ be a prediction score vector for $n$ classes $p=(s_1,\ldots,s_n)$ with $\forall i\leq n: s_i\in[0, 1]$ and $t$ be a threshold score vector for $n$ classes $t=(t_1,\ldots,t_n)$ with $\forall i\leq n: t_i\in[0, 1]$ that decides if class $i$ is considered true (\autoref{eqn:thresh}). We define the reweighted probability scores $p_r=(r_1, \ldots, r_i, \ldots, r_n)$ as:
+\begin{equation}
+	r_i:=
+	\begin{cases}
+		(\frac{s_i-t_i}{t_i}+1)/2,& \text{if } s_i < t_i\\
+		(\frac{s_i-t_i}{1-t_i}+1)/2,& \text{if } s_i \geq t_i\\
+	\end{cases}
+	\label{eqn:rew-probs}
+\end{equation}
+The reweighting function can be explained as splitting scores into positive and negative predictions where we stretch the space below the threshold $[0, t_i[$ to $[0, 0.5[$ and the space above and equal to threshold $t_i$: $[t_i, 1] \mapsto [0.5, 1]$. This has the advantage that predictions mean the same across all classes and models: We moved the decision boundary from $\forall{i}, t_i\mapsto0.5$ In \autoref{fig:scatter1} and \autoref{fig:scatter2} we see examples for the process of transforming  model outputs to reweighted probabilities.
+
+\subsubsection{Hand-picked Samples: Prediction Score Scatterplots}
+
+\begin{figure}[H]
+	\caption{Scatterplots showing from left to right: exact model predictions, model predictions minus specific class thresholds, reweighted prediction probabilities}
+	\begin{subfigure}[t]{0.95\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/HR04093scatterplot-predictions(combined)}
+		\caption{CPC Model}
+		%\label{fig:bl-parcoords-micro}	
+	\end{subfigure}%
+	
+	\begin{subfigure}[t]{0.95\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/HR04093scatterplot-predictions(combined)bl14}
+		\caption{Baseline Model (BL\_v14)}
+		%\label{fig:bl-parcoords-micro}	
+	\end{subfigure}%
+	\label{fig:scatter1}
+\end{figure}
+Looking at the leftmost plot in \autoref{fig:scatter1}, we see why reweighting probabilities is important for readability: the unchanged model outputs for class $44$ is considered true by the model but has a lower probability output than for example class 6 which is considered false. We substract the class specific thresholds and obtain a more readable output. Last but not least we transform the differences into real probabilities and are even able to judge how sure a model is about specific predictions: the closer to $0$ or $1 \implies$ prediction certainty high.
+
+For the \code{BL\_v14} model predictions we observe that only the correct class $41$ has a high probability of being true while the other classes falsely classified as true barely go above $0.5$. The CPC model predictions are less confident in general, however class 41 has still the highest probability. At this place we also want to point out a flaw of scores that are based on binary predictions: In this specific case CPC would have the higher score, as fewer classes are wrongly classified as true. Nevertheless we make the argument that in this case the predictions of the \code{BL\_v14} are higher quality because of the models high certainty prediction of the correct class.
+
+\autoref{fig:scatter2} shows yet another prediction example --- this time we would argue that the CPC predictions are slightly better, at least concerning classes labeled "true". Although more classes are classified as true erroneously, both $33$ and $41$ have been predicted with the highest certainty. Compare this to The baseline predictions where $41$ is fairly certain, but $33$ is just as unlikely as erroneously classified classes.
+\begin{figure}
+	\caption{Scatterplots showing from left to right: exact model predictions, model predictions minus specific class thresholds, reweighted prediction probabilities}
+	\begin{subfigure}[t]{0.95\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/HR04811scatterplot-predictions(combined).png}
+		\caption{CPC Model}
+		%\label{fig:bl-parcoords-micro}	
+	\end{subfigure}	
+	\begin{subfigure}[t]{0.95\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/HR04811scatterplot-predictions(combined)bl14.png}
+		\caption{Baseline Model (BL\_v14)}
+		%\label{fig:bl-parcoords-micro}	
+	\end{subfigure}%
+	\label{fig:scatter2}
+\end{figure}
+
+%\subsubsection{All Samples: Errorbars for Average Model Prediction Scores}
+%\begin{figure}
+%	\caption{Errorplot showing the exact model predictions, divided into groups depending on their ground truth label.}
+%	\begin{subfigure}[t]{0.95\textwidth}\centering
+%		\includegraphics[width=1\linewidth]{bilder/errorplot-prediction-cpc.png}
+%		\caption{Errorplot for CPC model}
+%		%\label{fig:bl-parcoords-micro}	
+%	\end{subfigure}
+%	\begin{subfigure}[t]{0.95\textwidth}\centering
+%		\includegraphics[width=1\linewidth]{bilder/errorplot-prediction-blv15.png}
+%		\caption{Errorplot for Baseline (v15) model}
+%		%\label{fig:bl-parcoords-micro}	
+%	\end{subfigure}%
+%	\label{fig:errorplot}
+%\end{figure}
+%\autoref{fig:errorplot} shows the averaged model predictions for all classes and their corresponding standard deviation. The predictions are divided into two groups, where blue states the ground truth class label for the input data is True, whereas orange states the label is false.
+%
+%In the baseline plot, the average probability of negative samples are below the means of the positive samples in most cases, which shows the model predicts the class labels correctly on average. Nevertheless it is noticeable that predictions where the ground truth is true are wider spread than where the ground truth is false and also that there are intersections between the two groups in which fully correct predictions are impossible to make.
+%
+%For the CPC model, similar observations can be made, with the difference that most average values are lower than in the baseline plot and the standard deviations are closer to the mean as well.
+%
+%However before jumping to conclusion we need to utilize the class thresholds that were obtained by maximizing the ROC-AUC (\autoref{sec:evaluation}) to reweight the model outputs to make them comparable and obtain values that are more spread in $[0, 1]$.
+%
+%\autoref{fig:errorplot-threshold} and \autoref{fig:errorplot-threshold-meangap} show these reweighted errorplots, where the latter is additionally sorted by the difference between the group class prediction averages, which is a further effort to make them comparable more easily. 
+%\begin{figure}
+%	\caption{Errorplot showing the model predictions reweighted with the corresponding class thresholds}
+%	\begin{subfigure}[t]{0.48\textwidth}\centering
+%		\includegraphics[width=1\linewidth]{bilder/errorplot-prediction-threshold-cpc.png}
+%		\caption{Errorplot for CPC model}
+%		%\label{fig:bl-parcoords-micro}	
+%	\end{subfigure}%
+%	\hfill
+%	\begin{subfigure}[t]{0.48\textwidth}\centering
+%		\includegraphics[width=1\linewidth]{bilder/errorplot-prediction-threshold-blv15.png}
+%		\caption{Errorplot for Baseline (v15) model}
+%		%\label{fig:bl-parcoords-micro}	
+%	\end{subfigure}%
+%	\label{fig:errorplot-threshold}
+%\end{figure}
+%\begin{figure}
+%	\caption{Errorplot showing the model predictions reweighted with the corresponding class thresholds (sorted by gap between group averages)}
+%	\begin{subfigure}[t]{0.95\textwidth}\centering
+%		\includegraphics[width=1\linewidth]{bilder/errorplot-prediction-threshold-cpc-meangap.png}
+%		\caption{Errorplot for CPC model, sorted by gap between means}
+%		%\label{fig:bl-parcoords-micro}	
+%	\end{subfigure}	
+%	\begin{subfigure}[t]{0.95\textwidth}\centering
+%		\includegraphics[width=1\linewidth]{bilder/errorplot-prediction-threshold-blv15-meangap.png}
+%		\caption{Errorplot for Baseline (v15) model, sorted by gap between means}
+%		%\label{fig:bl-parcoords-micro}	
+%	\end{subfigure}%
+%	\label{fig:errorplot-threshold-meangap}
+%\end{figure}
+%
+%To show that model predictions are not evenly distributed we visualize the standard deviations "in two directions" --- one shows the mean squared difference from the prediction mean above the prediction mean, the other shows the mean squared difference from the prediction mean below the mean. Again, it's hard to draw a clear conclusion concerning which of the models is performing better, but we argue that the CPC models predictions seem to be less overlapped and thus binary predictions will be more accurate.
+%\begin{figure}
+%	\caption{Errorplot showing the model predictions reweighted with the corresponding class thresholds (sorted by gap between group averages)}
+%	\begin{subfigure}[t]{0.95\textwidth}\centering
+%		\includegraphics[width=1\linewidth]{bilder/errorplot-prediction-threshold-cpc-twodirectional.png}
+%		\caption{Errorplot for CPC model, with std calculated  "in two directions"}
+%		%\label{fig:bl-parcoords-micro}	
+%	\end{subfigure}%
+%	
+%	\begin{subfigure}[t]{0.95\textwidth}\centering
+%		\includegraphics[width=1\linewidth]{bilder/errorplot-prediction-threshold-blv15-twodirectional.png}
+%		\caption{Errorplot for Baseline (v15) model, with std calculated  "in two directions"}
+%		%\label{fig:bl-parcoords-micro}	
+%	\end{subfigure}%
+%	\label{fig:errorplot-threshold-twodir}
+%\end{figure}
+
+\subsubsection{All Samples: Violinplots}
+Below in \autoref{fig:violinplot-normal} we include the raw prediction score data visualized as a violinplot, which show the prediction distributions for all classes. We opted to visualize both True and False prediction distributions with the same width, which removes the information about the group sizes, but increases readability. Noticeable is that even without the reweighting of model predictions, probabilities in the baseline model are more evenly distributed within $[0,1]$, indicating that the sigmoid was able to more precisely predict the extrema $0$ and $1$. This is not implicitly better since thresholds get selected to divide the probabilties into true and false anyways and as long as the false and true label predictions are more or less separate from each other, results are equally correct.
+%\begin{figure}[H]
+%	\caption{Scatterplot showing all exact model predictions, divided into groups depending on their ground truth label.}
+%	\begin{subfigure}[t]{0.5\textwidth}\centering
+%		\includegraphics[width=1\linewidth]{bilder/cpc-probdistribution-unfrozen-standard-width.png}
+%		\caption{Scatterplot for a CPC model; unfrozen during Downstream Training. Horizontal lines show model specific decision thresholds}
+%		%\label{fig:bl-parcoords-micro}	
+%	\end{subfigure}
+%	\begin{subfigure}[t]{0.5\textwidth}\centering
+%		\includegraphics[width=1\linewidth]{bilder/bl-probdistribution-standard-width.png}
+%		\caption{Scatterplot for Baseline (v14) model. Horizontal lines show model specific decision thresholds}
+%		%\label{fig:bl-parcoords-micro}	
+%	\end{subfigure}%
+%	
+%	\begin{subfigure}[t]{0.5\textwidth}\centering
+%		\includegraphics[width=1\linewidth]{bilder/cpc-probdistribution-unfrozen-reweighted-width.png}
+%		\caption{Scatterplot for CPC model; unfrozen during Downstream Training. Probabilities reweighted as per \autoref{eqn:rew-probs}}
+%		%\label{fig:bl-parcoords-micro}	
+%	\end{subfigure}%
+%	\begin{subfigure}[t]{0.5\textwidth}\centering
+%		\includegraphics[width=1\linewidth]{bilder/bl-probdistribution-reweighted-width.png}
+%		\caption{Scatterplot for Baseline (v14) model. Probabilities reweighted as per \autoref{eqn:rew-probs}}
+%		%\label{fig:bl-parcoords-micro}	
+%	\end{subfigure}%
+%	\label{fig:errorplot-scatter-all}
+%\end{figure}
+\begin{figure}[H]
+	\caption{Scatterplot showing all exact model predictions, divided into groups depending on their ground truth label.}
+	\begin{subfigure}[t]{1\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/cpc-probdistribution-unfrozen-standard-width.png}
+		\caption{Violinplot for a CPC model; unfrozen during Downstream Training. Horizontal lines show model specific decision thresholds}
+		%\label{fig:bl-parcoords-micro}	
+	\end{subfigure}
+	\begin{subfigure}[t]{1\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/bl-probdistribution-standard-width.png}
+		\caption{Violinplot for Baseline (v14) model. Horizontal lines show model specific decision thresholds}
+		%\label{fig:bl-parcoords-micro}	
+	\end{subfigure}%
+\label{fig:violinplot-normal}
+\end{figure}
+Yet again, with the model thresholds added in \autoref{fig:violinplot-reweight}, the groups are more or less visibly split into true and false samples, with some exceptions like class 41 (sinus rythm), where true samples get classified as false or false samples as true fairly often. The comparison between CPC model and baseline model is difficult, but we notice that "False" classes are more oftenly wrongly classified as true for the CPC model. Interesting to see is that both models failed to predict class 36 correctly, where the baseline model even predicted samples as false with high certainty ($p=0$). On the other side these plots also show strengths of specific models: Class 31 is correctly split into true and false samples for the baseline model but not the CPC model, whereas class 62 is correctly classified by CPC but not the baseline. Looking at the class distribution in \autoref{fig:ClassCountsBar} we observe that class 62 is a small class only available in select datasets, again hinting at CPC's ability of needing less labeled data.
+
+With the help of these plots one could create a model ensemble which utilizes different networks for each class, creating a more powerful and accurate prediction model.
+\begin{figure}[H]	
+	\begin{subfigure}[t]{1\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/cpc-probdistribution-unfrozen-reweighted-width.png}
+		\caption{Violinplot for CPC model; unfrozen during Downstream Training. Probabilities reweighted as per \autoref{eqn:rew-probs}}
+		%\label{fig:bl-parcoords-micro}	
+	\end{subfigure}
+	\begin{subfigure}[t]{1\textwidth}\centering
+		\includegraphics[width=1\linewidth]{bilder/bl-probdistribution-reweighted-width.png}
+		\caption{Violinplot for Baseline (v14) model. Probabilities reweighted as per \autoref{eqn:rew-probs}}
+		%\label{fig:bl-parcoords-micro}	
+	\end{subfigure}%
+\label{fig:violinplot-reweight}
+\end{figure}
+
+\subsubsection{Explaining predicted classes in input data}\label{sec:explainingclasses}
+As a bonus, having predicted a diagnostic label, it might be of great interest to also highlight where the model assumes the predicted classes are located at in the input data. We try to accomplish this task by performing a feed-forward of the input data through the network and than calculate the loss between the prediction and the target $y^c$ --- an all-zero valued vector ($\sim$ all diagnostic labels have a probability of 0) besides a specified target class $c$ , which is set to one (class probability $1$). As of yet we use the available ground truth labels, which are, if not available, to be replaced with the binary predictions obtained with the model's thresholds. The gradients are calculated by backpropagation with respect to the input data $X$. Once the gradient matrices $\frac{\partial y^c}{\partial X}$ has been obtained, we either take their absolute values to visualize areas that have an impact in general or apply a ReLU activation to highlight areas that positively influence the target's class prediction. The latter idea is based on the Grad-CAM paper \autocite{DBLP:journals/corr/SelvarajuDVCPB16}, the procedure in general is called guided backpropagation \autocite{HowtoVisuallyExplainanyCNNbasedModelsbyRenuKhandelwalTowardsDataScience-2022-01-18}. We normalize the matrices individually to $[0, 1]$ and assign colors for each class, which increase in opacity for high values and become transparent below a certain threshold (e.g. $<0.2$, which varies depending on model). We can see what values in the data would have to change in order to decrease the loss: High gradient values $\sim$ high influence on the predicted classes; low gradient values $\sim$ less influence on the predicted classes. To show multiple classes/colors in the same spots we divide the ecg channels into the number of present classes and color each division separately. The final result with multiple patients as example can be seen in \autoref{explain-bl} for the \code{BL\_v8} model and in \autoref{explain-cpc} for a CPC Model. 
+
+\begin{figure}
+	\begin{subfigure}{1\textwidth}\centering
+		\includegraphics[width=\linewidth]{"bilder/HR07448-class:[4, 16, 33, 41]-gradient-cambl11.png"}
+		\caption{ECG example HR07448}
+		%\label{explain}
+		\centering
+	\end{subfigure}
+	\begin{subfigure}{1\textwidth}\centering
+		\includegraphics[width=\linewidth]{"bilder/HR16414-class:[3, 6, 7, 41]-gradient-cambl11.png"}
+		\caption{ECG example HR16414}
+		%\label{explain}
+		\centering
+	\end{subfigure}
+	\caption{\code{BL\_v8} model gradients. Absolute gradient values utilized. Colored vertical bars/areas show "interesting/controversial" spots in the input data.}
+	\label{explain-bl}
+\end{figure}
+\begin{figure}
+	\begin{subfigure}{1\textwidth}\centering
+		\includegraphics[width=\linewidth]{"bilder/HR07448-class:[4, 16, 33, 41]-gradient-camcpc2.png"}
+		\caption{ECG example HR07448}
+		%\label{explain}
+		\centering
+	\end{subfigure}
+	\begin{subfigure}{1\textwidth}\centering
+		\includegraphics[width=\linewidth]{"bilder/HR16414-class:[3, 6, 7, 41]-gradient-camcpc2.png"}
+		\caption{ECG example HR16414}
+		%\label{explain}
+		\centering
+	\end{subfigure}
+	\caption{CPC model (with \code{encoder\_v0}) gradients. Absolute gradient values utilized. Colored vertical bars/areas show "interesting/controversial" spots in the input data.}
+	\label{explain-cpc}
+\end{figure}
+Interestingly the CPC model's biggest gradient values are less spread throughout the input which could potentially lead to marking interesting spots with a higher precision. On the other hand locations might not get marked although classes are present there. The markings in the baseline model are almost everywhere, making class judgments more difficult.
+
+
+Additionally to our approach of calculating $\frac{\partial y^c}{\partial X}$, we tested Grad-CAM \autocite{DBLP:journals/corr/SelvarajuDVCPB16} which takes the gradient $\frac{\partial y^c}{\partial A^k}$ of the convolutional feature maps $A^k$ in a selected layer and calculates $L^c_{\mathrm{Grad-CAM}} = \mathit{ReLU}\left(\sum_{k}\alpha^c_k A^k\right)$, where $\alpha^c_k=\frac{1}{ij}\sum_i\sum_j\frac{\partial y^c}{\partial A^k_{i,j}}$ is the mean/ global average pooling of feature map $A^k$. $L^c_{\mathrm{Grad-CAM}}$ can thus be seen as the sum of all feature maps in a specified layer, weighted according to their importance in predicting a specified class $c$, which results in a coarse heatmap where the model assumes the class to be located. One big upside compared to our localization approach is that the locations are directly generated from later layers, where most class features are encoded in. The downside however is that the heatmap size is dependent on the individual architecture and not the input data. This leads to few values available for localization in some cases. Additionally, in contrast to our approach, all channel information get lost, meaning eg. ecg-channel v1 and ecg-channel v3 are colored the exact same, although a specific class can only be recognized in one of them.
+
+The coarse heatmap is then rescaled to match the input size, which is $4500$ in our case. Since the layers feature map channels get summarized into a single value, no spots depending on input channels can be recovered and all input channels share the same areas of interest. This is to say that even if a certain class is only visible in a specific ecg channel all others will be colorized as well, which is a clear downside to our approach. Furthermore the heat map's size is dependent on the downsampling factor in the data dimension of the model architecture: For our \code{encoder\_v0} CPC model only $1\times26$ values are generated, which allows for a rough localization of classes in the input data only. The BL\_v8 model generates $1\times147$ values which results in much finer localization in the input data and thus more accurate results. The \code{TCN\_down} architecture is probably the most interesting one since it makes use of heavy padding and no strides, making it output $4500$ values (same as input) even in the later layers. We expect the best results there.
+
+\begin{figure}
+	\begin{subfigure}{1\textwidth}\centering
+		\includegraphics[width=\linewidth]{"bilder/HR07448-class:[4, 16, 33, 41]-gradient-cambl8.png"}
+		%\label{explain}
+		\centering
+	\end{subfigure}	
+	\caption{ECG examples, for the BL\_v8 Model, Grad-Cam technique used. 147 feature map values stretched to input length of 4500.}
+	\label{explain-gradcam-v8}
+\end{figure}
+In \autoref{explain-gradcam-v8} we see that Grad-Cam created spots in the data that might be able to successfully explain the classes position in the input data. For example the normal sinus rhythm (no. 41) can be found in regular intervals everywhere in the data as expected, while "Left Axis Deviation" (class 33) can only be found at a single spot. "Mycardial Infarction" (class 4) is assumed at 2-3 spots.
+
+\begin{figure}
+	\begin{subfigure}[t]{1\textwidth}\centering
+		\includegraphics[width=\linewidth]{"bilder/HR07448-class:[4, 16, 33, 41]-gradient-camcpc0.png"}
+		\caption{\code{encoder\_v0} used. 26 feature map values stretched to input length of 4500.}
+		\label{explain-gradcam-cpcv0}
+		\centering
+	\end{subfigure}
+	\begin{subfigure}[t]{1\textwidth}\centering
+		\includegraphics[width=\linewidth]{"bilder/HR07448-class:[4, 16, 33, 41]-gradient-camcpc8.png"}
+		\caption{\code{encoder\_likev8} used. 147 feature map values stretched to input length of 4500.}
+		\label{explain-gradcam-cpclikev8}
+		\centering
+	\end{subfigure}	
+	\caption{ECG examples, for the CPC Model, Grad-Cam technique used.}
+\end{figure}
+For CPC model \autoref{explain-gradcam-cpcv0} we see that the grad-cam results are not very localized and all over the place, also the different classes do not seem to differ between one another. We compare to a CPC model that is trained with a different encoder to check whether the poor performance is always present: \autoref{explain-gradcam-cpclikev8}. We observe similar results as with the baseline model.
+
+\begin{figure}
+	\begin{subfigure}{1\textwidth}\centering
+		\includegraphics[width=\linewidth]{"bilder/HR07448-class:[4, 16, 33, 41]-gradient-camtcn.png"}
+		%\label{explain}
+		\centering
+	\end{subfigure}	
+	\caption{ECG examples, for the TCN (down) architecture, Grad-Cam technique used. 4500 feature map values 'stretched' to input length of 4500.}
+	\label{explain-gradcam-tcn}
+\end{figure}
+The \code{TCN} baseline model in \autoref{explain-gradcam-tcn} has a very clear localization of classes, which is probably mostly due to the big output size even in later layers, since the \code{v8} network has a similar macro average score.
+
+
+Last but not least we asked a cardiologist to rate the class markings in the grad-cam images and we were given the following comments:
+\begin{itemize}
+	\item In \autoref{explain-gradcam-v8} the sinus rhythm (class 41) is off place in some places and generally too spread out. When labeling it you would pick the center of the QRS-points
+	\item \autoref{explain-gradcam-cpcv0} is marking too much, no specific locations are clearly recognizable.
+	\item In \autoref{explain-gradcam-cpclikev8} the sinus rhythm is again off beat in some places but otherwise recognizable. The myocardial infarction is diagnosed mostly by looking at the S-T interval, which is also marked here. Left axis deviation is a "turned-around" QRS complex, so the localization seems okay, but should only be marked in selected channels (eg. channel 3).
+	\item \autoref{explain-gradcam-tcn} perfectly shows the sinus rhythm center at the QRS complex but disregards the P-wave completely. The myocardial infarction is not diagnosed by looking at the QRS complex, making these markings probably incorrect. Left axis deviation is visible in some channels only, but all got marked.
+\end{itemize}
+When asked to pick a "best-performing" figure they selected \autoref{explain-gradcam-cpclikev8}. 
+
+Especially the fact that some classes are only visible in certain channels shows that the grad-cam technique is intended for use on images where different data channels encode color but have no independent role in localizing different classes. Calculating the gradient towards the input does not share this drawback but the gradient is not as suited for localizing class labels. We tried "Guided-Grad-Cam" which in our case struggled to display anything at all, since guided backpropagation and gradient cam are multiplied to receive the final output, the image was almost always mostly without colors due to values close to $0$.
+

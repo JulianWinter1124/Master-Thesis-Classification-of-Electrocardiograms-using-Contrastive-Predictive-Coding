@@ -1,0 +1,385 @@
+\newpage
+\begingroup
+\makeatletter
+\renewcommand\section{\@startsection{section}{3}{\z@}%
+	{-3.25ex\@plus -1ex \@minus -.2ex}%
+	{-1.5ex \@plus -.2ex}% Formerly 1.5ex \@plus .2ex
+	{\normalfont\normalsize\bfseries}}
+\renewcommand\subsection{\@startsection{subsection}{3}{\z@}%
+	{-3.25ex\@plus -1ex \@minus -.2ex}%
+	{-1.5ex \@plus -.2ex}% Formerly 1.5ex \@plus .2ex
+	{\normalfont\normalsize\bfseries}}
+\renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
+	{-3.25ex\@plus -1ex \@minus -.2ex}%
+	{-1.5ex \@plus -.2ex}% Formerly 1.5ex \@plus .2ex
+	{\normalfont\normalsize\bfseries}}
+\renewcommand\paragraph{\@startsection{paragraph}{3}{\z@}%
+	{-3.25ex\@plus -1ex \@minus -.2ex}%
+	{-1.5ex \@plus -.2ex}% Formerly 1.5ex \@plus .2ex
+	{\normalfont\normalsize\bfseries}}
+\renewcommand\subparagraph{\@startsection{subparagraph}{3}{\z@}%
+	{-3.25ex\@plus -1ex \@minus -.2ex}%
+	{-1.5ex \@plus -.2ex}% Formerly 1.5ex \@plus .2ex
+	{\normalfont\normalsize\bfseries}}
+\makeatother
+\lstdefinestyle{mystyle2}{
+	backgroundcolor=\color{backcolour},   
+	commentstyle=\color{codegreen},%
+	keywordstyle=\color{magenta},%
+	numberstyle=\tiny\color{codegray},
+	stringstyle=\color{codepurple},
+	basicstyle=\ttfamily\tiny, %\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	captionpos=b,                    
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=3
+}
+%TODO: printer
+\definecolor{mycolorcode}{cmyk}{0.,0.,0.,0.95}
+\definecolor{mycolorkeyword}{cmyk}{0.,0.,0.,1.}
+\definecolor{mycolorcomment}{cmyk}{0.,0.,0.,0.8}
+\definecolor{mycolorstring}{cmyk}{0.,0.,0.,0.8}
+\definecolor{mycolorback}{cmyk}{0.,0.,0.,0.01}
+
+\lstdefinestyle{mystyleblack}{
+	backgroundcolor=\color{mycolorback},%\color{backcolour} 
+	commentstyle=\color{mycolorcomment},%\color{codegreen}
+	keywordstyle=\color{mycolorkeyword},%\color{magenta}
+	numberstyle=\color{mycolorstring},%\tiny\color{codegray}
+	stringstyle=\color{mycolorstring},%\color{codepurple}
+	basicstyle=\ttfamily\tiny, %\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	captionpos=b,                    
+	keepspaces=true,    
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=3
+}
+\lstset{
+	style=mystyle2,
+	literate=
+	{á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+	{Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+	{à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+	{À}{{\`A}}1 {È}{{\'E}}1 {Ì}{{\`I}}1 {Ò}{{\`O}}1 {Ù}{{\`U}}1
+	{ä}{{\"a}}1 {ë}{{\"e}}1 {ï}{{\"i}}1 {ö}{{\"o}}1 {ü}{{\"u}}1
+	{Ä}{{\"A}}1 {Ë}{{\"E}}1 {Ï}{{\"I}}1 {Ö}{{\"O}}1 {Ü}{{\"U}}1
+	{â}{{\^a}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {û}{{\^u}}1
+	{Â}{{\^A}}1 {Ê}{{\^E}}1 {Î}{{\^I}}1 {Ô}{{\^O}}1 {Û}{{\^U}}1
+	{ã}{{\~a}}1 {ẽ}{{\~e}}1 {ĩ}{{\~i}}1 {õ}{{\~o}}1 {ũ}{{\~u}}1
+	{Ã}{{\~A}}1 {Ẽ}{{\~E}}1 {Ĩ}{{\~I}}1 {Õ}{{\~O}}1 {Ũ}{{\~U}}1
+	{œ}{{\oe}}1 {Œ}{{\OE}}1 {æ}{{\ae}}1 {Æ}{{\AE}}1 {ß}{{\ss}}1
+	{ű}{{\H{u}}}1 {Ű}{{\H{U}}}1 {ő}{{\H{o}}}1 {Ő}{{\H{O}}}1
+	{ç}{{\c c}}1 {Ç}{{\c C}}1 {ø}{{\o}}1 {å}{{\r a}}1 {Å}{{\r A}}1
+}
+\begin{myparindent}{0pt}
+
+\noindent\section{Code} (folder)
+	\noindent\subsection[architectures\_baseline\_challenge]{architectures\_baseline\_challenge} (folder)
+\noindent\subsubsection[baseline\_FCN.py]{architectures\_baseline\_challenge -> baseline\_FCN.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_FCN.py"}
+\noindent\subsubsection[baseline\_MLP.py]{architectures\_baseline\_challenge -> baseline\_MLP.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_MLP.py"}
+\noindent\subsubsection[baseline\_TCN\_block.py]{architectures\_baseline\_challenge -> baseline\_TCN\_block.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_TCN_block.py"}
+\noindent\subsubsection[baseline\_TCN\_down.py]{architectures\_baseline\_challenge -> baseline\_TCN\_down.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_TCN_down.py"}
+\noindent\subsubsection[baseline\_TCN\_flatten.py]{architectures\_baseline\_challenge -> baseline\_TCN\_flatten.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_TCN_flatten.py"}
+\noindent\subsubsection[baseline\_TCN\_last.py]{architectures\_baseline\_challenge -> baseline\_TCN\_last.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_TCN_last.py"}
+\noindent\subsubsection[baseline\_alex.py]{architectures\_baseline\_challenge -> baseline\_alex.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_alex.py"}
+\noindent\subsubsection[baseline\_alex\_v2.py]{architectures\_baseline\_challenge -> baseline\_alex\_v2.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_alex_v2.py"}
+\noindent\subsubsection[baseline\_cnn\_v0.py]{architectures\_baseline\_challenge -> baseline\_cnn\_v0.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_cnn_v0.py"}
+\noindent\subsubsection[baseline\_cnn\_v0\_1.py]{architectures\_baseline\_challenge -> baseline\_cnn\_v0\_1.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_cnn_v0_1.py"}
+\noindent\subsubsection[baseline\_cnn\_v0\_2.py]{architectures\_baseline\_challenge -> baseline\_cnn\_v0\_2.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_cnn_v0_2.py"}
+\noindent\subsubsection[baseline\_cnn\_v0\_3.py]{architectures\_baseline\_challenge -> baseline\_cnn\_v0\_3.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_cnn_v0_3.py"}
+\noindent\subsubsection[baseline\_cnn\_v1.py]{architectures\_baseline\_challenge -> baseline\_cnn\_v1.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_cnn_v1.py"}
+\noindent\subsubsection[baseline\_cnn\_v14.py]{architectures\_baseline\_challenge -> baseline\_cnn\_v14.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_cnn_v14.py"}
+\noindent\subsubsection[baseline\_cnn\_v15.py]{architectures\_baseline\_challenge -> baseline\_cnn\_v15.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_cnn_v15.py"}
+\noindent\subsubsection[baseline\_cnn\_v2.py]{architectures\_baseline\_challenge -> baseline\_cnn\_v2.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_cnn_v2.py"}
+\noindent\subsubsection[baseline\_cnn\_v3.py]{architectures\_baseline\_challenge -> baseline\_cnn\_v3.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_cnn_v3.py"}
+\noindent\subsubsection[baseline\_cnn\_v4.py]{architectures\_baseline\_challenge -> baseline\_cnn\_v4.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_cnn_v4.py"}
+\noindent\subsubsection[baseline\_cnn\_v5.py]{architectures\_baseline\_challenge -> baseline\_cnn\_v5.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_cnn_v5.py"}
+\noindent\subsubsection[baseline\_cnn\_v6.py]{architectures\_baseline\_challenge -> baseline\_cnn\_v6.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_cnn_v6.py"}
+\noindent\subsubsection[baseline\_cnn\_v7.py]{architectures\_baseline\_challenge -> baseline\_cnn\_v7.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_cnn_v7.py"}
+\noindent\subsubsection[baseline\_cnn\_v8.py]{architectures\_baseline\_challenge -> baseline\_cnn\_v8.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_cnn_v8.py"}
+\noindent\subsubsection[baseline\_cnn\_v9.py]{architectures\_baseline\_challenge -> baseline\_cnn\_v9.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_cnn_v9.py"}
+\noindent\subsubsection[baseline\_convencoder.py]{architectures\_baseline\_challenge -> baseline\_convencoder.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_convencoder.py"}
+\noindent\subsubsection[baseline\_resnet.py]{architectures\_baseline\_challenge -> baseline\_resnet.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_resnet.py"}
+\noindent\subsubsection[baseline\_rnn.py]{architectures\_baseline\_challenge -> baseline\_rnn.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_rnn.py"}
+\noindent\subsubsection[baseline\_rnn\_simplest\_gru.py]{architectures\_baseline\_challenge -> baseline\_rnn\_simplest\_gru.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_rnn_simplest_gru.py"}
+\noindent\subsubsection[baseline\_rnn\_simplest\_lstm.py]{architectures\_baseline\_challenge -> baseline\_rnn\_simplest\_lstm.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_baseline_challenge/baseline_rnn_simplest_lstm.py"}
+\noindent\subsection[architectures\_cpc]{architectures\_cpc} (folder)
+\noindent\subsubsection[cpc\_autoregressive\_hidden.py]{architectures\_cpc -> cpc\_autoregressive\_hidden.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_autoregressive_hidden.py"}
+\noindent\subsubsection[cpc\_autoregressive\_v0.py]{architectures\_cpc -> cpc\_autoregressive\_v0.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_autoregressive_v0.py"}
+\noindent\subsubsection[cpc\_base.py]{architectures\_cpc -> cpc\_base.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_base.py"}
+\noindent\subsubsection[cpc\_combined.py]{architectures\_cpc -> cpc\_combined.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_combined.py"}
+\noindent\subsubsection[cpc\_downstream\_cnn.py]{architectures\_cpc -> cpc\_downstream\_cnn.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_downstream_cnn.py"}
+\noindent\subsubsection[cpc\_downstream\_latent\_average.py]{architectures\_cpc -> cpc\_downstream\_latent\_average.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_downstream_latent_average.py"}
+\noindent\subsubsection[cpc\_downstream\_latent\_maximum.py]{architectures\_cpc -> cpc\_downstream\_latent\_maximum.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_downstream_latent_maximum.py"}
+\noindent\subsubsection[cpc\_downstream\_model\_multitarget\_v1.py]{architectures\_cpc -> cpc\_downstream\_model\_multitarget\_v1.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_downstream_model_multitarget_v1.py"}
+\noindent\subsubsection[cpc\_downstream\_model\_multitarget\_v2.py]{architectures\_cpc -> cpc\_downstream\_model\_multitarget\_v2.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_downstream_model_multitarget_v2.py"}
+\noindent\subsubsection[cpc\_downstream\_only.py]{architectures\_cpc -> cpc\_downstream\_only.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_downstream_only.py"}
+\noindent\subsubsection[cpc\_downstream\_twolinear.py]{architectures\_cpc -> cpc\_downstream\_twolinear.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_downstream_twolinear.py"}
+\noindent\subsubsection[cpc\_downstream\_twolinear\_v2.py]{architectures\_cpc -> cpc\_downstream\_twolinear\_v2.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_downstream_twolinear_v2.py"}
+\noindent\subsubsection[cpc\_encoder\_as\_strided.py]{architectures\_cpc -> cpc\_encoder\_as\_strided.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_encoder_as_strided.py"}
+\noindent\subsubsection[cpc\_encoder\_decoder\_v2.py]{architectures\_cpc -> cpc\_encoder\_decoder\_v2.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_encoder_decoder_v2.py"}
+\noindent\subsubsection[cpc\_encoder\_likev8.py]{architectures\_cpc -> cpc\_encoder\_likev8.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_encoder_likev8.py"}
+\noindent\subsubsection[cpc\_encoder\_small.py]{architectures\_cpc -> cpc\_encoder\_small.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_encoder_small.py"}
+\noindent\subsubsection[cpc\_encoder\_v0.py]{architectures\_cpc -> cpc\_encoder\_v0.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_encoder_v0.py"}
+\noindent\subsubsection[cpc\_encoder\_v1.py]{architectures\_cpc -> cpc\_encoder\_v1.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_encoder_v1.py"}
+\noindent\subsubsection[cpc\_encoder\_v2.py]{architectures\_cpc -> cpc\_encoder\_v2.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_encoder_v2.py"}
+\noindent\subsubsection[cpc\_encoder\_v3.py]{architectures\_cpc -> cpc\_encoder\_v3.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_encoder_v3.py"}
+\noindent\subsubsection[cpc\_encoder\_v4.py]{architectures\_cpc -> cpc\_encoder\_v4.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_encoder_v4.py"}
+\noindent\subsubsection[cpc\_encoder\_vresnet.py]{architectures\_cpc -> cpc\_encoder\_vresnet.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_encoder_vresnet.py"}
+\noindent\subsubsection[cpc\_intersect.py]{architectures\_cpc -> cpc\_intersect.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_intersect.py"}
+\noindent\subsubsection[cpc\_intersect\_manylatents.py]{architectures\_cpc -> cpc\_intersect\_manylatents.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_intersect_manylatents.py"}
+\noindent\subsubsection[cpc\_predictor\_nocontext.py]{architectures\_cpc -> cpc\_predictor\_nocontext.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_predictor_nocontext.py"}
+\noindent\subsubsection[cpc\_predictor\_stacked.py]{architectures\_cpc -> cpc\_predictor\_stacked.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_predictor_stacked.py"}
+\noindent\subsubsection[cpc\_predictor\_v0.py]{architectures\_cpc -> cpc\_predictor\_v0.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_predictor_v0.py"}
+\noindent\subsubsection[cpc\_with\_decoder.py]{architectures\_cpc -> cpc\_with\_decoder.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_cpc/cpc_with_decoder.py"}
+\noindent\subsection[architectures\_various]{architectures\_various} (folder)
+\noindent\subsubsection[explain\_network.py]{architectures\_various -> explain\_network.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_various/explain_network.py"}
+\noindent\subsubsection[explain\_network2.py]{architectures\_various -> explain\_network2.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/architectures_various/explain_network2.py"}
+\noindent\subsection[deprecated]{deprecated} (folder)
+\noindent\subsubsection[architectures\_baseline]{deprecated -> architectures\_baseline} (folder)
+\noindent\paragraph[baseline\_cnn\_v0.py]{deprecated -> architectures\_baseline -> baseline\_cnn\_v0.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_cnn_v0.py"}
+\noindent\paragraph[baseline\_cnn\_v0\_1.py]{deprecated -> architectures\_baseline -> baseline\_cnn\_v0\_1.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_cnn_v0_1.py"}
+\noindent\paragraph[baseline\_cnn\_v0\_2.py]{deprecated -> architectures\_baseline -> baseline\_cnn\_v0\_2.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_cnn_v0_2.py"}
+\noindent\paragraph[baseline\_cnn\_v0\_3.py]{deprecated -> architectures\_baseline -> baseline\_cnn\_v0\_3.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_cnn_v0_3.py"}
+\noindent\paragraph[baseline\_cnn\_v1.py]{deprecated -> architectures\_baseline -> baseline\_cnn\_v1.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_cnn_v1.py"}
+\noindent\paragraph[baseline\_cnn\_v10.py]{deprecated -> architectures\_baseline -> baseline\_cnn\_v10.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_cnn_v10.py"}
+\noindent\paragraph[baseline\_cnn\_v11.py]{deprecated -> architectures\_baseline -> baseline\_cnn\_v11.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_cnn_v11.py"}
+\noindent\paragraph[baseline\_cnn\_v12.py]{deprecated -> architectures\_baseline -> baseline\_cnn\_v12.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_cnn_v12.py"}
+\noindent\paragraph[baseline\_cnn\_v13.py]{deprecated -> architectures\_baseline -> baseline\_cnn\_v13.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_cnn_v13.py"}
+\noindent\paragraph[baseline\_cnn\_v14.py]{deprecated -> architectures\_baseline -> baseline\_cnn\_v14.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_cnn_v14.py"}
+\noindent\paragraph[baseline\_cnn\_v2.py]{deprecated -> architectures\_baseline -> baseline\_cnn\_v2.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_cnn_v2.py"}
+\noindent\paragraph[baseline\_cnn\_v3.py]{deprecated -> architectures\_baseline -> baseline\_cnn\_v3.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_cnn_v3.py"}
+\noindent\paragraph[baseline\_cnn\_v4.py]{deprecated -> architectures\_baseline -> baseline\_cnn\_v4.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_cnn_v4.py"}
+\noindent\paragraph[baseline\_cnn\_v5.py]{deprecated -> architectures\_baseline -> baseline\_cnn\_v5.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_cnn_v5.py"}
+\noindent\paragraph[baseline\_cnn\_v6.py]{deprecated -> architectures\_baseline -> baseline\_cnn\_v6.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_cnn_v6.py"}
+\noindent\paragraph[baseline\_cnn\_v7.py]{deprecated -> architectures\_baseline -> baseline\_cnn\_v7.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_cnn_v7.py"}
+\noindent\paragraph[baseline\_cnn\_v8.py]{deprecated -> architectures\_baseline -> baseline\_cnn\_v8.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_cnn_v8.py"}
+\noindent\paragraph[baseline\_cnn\_v9.py]{deprecated -> architectures\_baseline -> baseline\_cnn\_v9.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_cnn_v9.py"}
+\noindent\paragraph[baseline\_convencoder.py]{deprecated -> architectures\_baseline -> baseline\_convencoder.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_convencoder.py"}
+\noindent\paragraph[baseline\_losses.py]{deprecated -> architectures\_baseline -> baseline\_losses.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/architectures_baseline/baseline_losses.py"}
+\noindent\subsubsection[cardio\_model\_v4.py]{deprecated -> cardio\_model\_v4.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/cardio_model_v4.py"}
+\noindent\subsubsection[cardio\_model\_v5.py]{deprecated -> cardio\_model\_v5.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/cardio_model_v5.py"}
+\noindent\subsubsection[cardio\_model\_v6.py]{deprecated -> cardio\_model\_v6.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/cardio_model_v6.py"}
+\noindent\subsubsection[cpc\_alpha.py]{deprecated -> cpc\_alpha.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/cpc_alpha.py"}
+\noindent\subsubsection[cpc\_decoder.py]{deprecated -> cpc\_decoder.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/cpc_decoder.py"}
+\noindent\subsubsection[cpc\_utils.py]{deprecated -> cpc\_utils.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/cpc_utils.py"}
+\noindent\subsubsection[data\_storage.py]{deprecated -> data\_storage.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/data_storage.py"}
+\noindent\subsubsection[downstream\_model.py]{deprecated -> downstream\_model.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/downstream_model.py"}
+\noindent\subsubsection[downstream\_model\_multitarget.py]{deprecated -> downstream\_model\_multitarget.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/downstream_model_multitarget.py"}
+\noindent\subsubsection[ecg\_datasets.py]{deprecated -> ecg\_datasets.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/ecg_datasets.py"}
+\noindent\subsubsection[main.py]{deprecated -> main.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/main.py"}
+\noindent\subsubsection[make\_clean\_data.py]{deprecated -> make\_clean\_data.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/deprecated/make_clean_data.py"}
+\noindent\subsection[experiments]{experiments} (folder)
+\noindent\subsubsection[create\_fewer\_labels\_data.py]{experiments -> create\_fewer\_labels\_data.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/experiments/create_fewer_labels_data.py"}
+\noindent\subsubsection[create\_timeseries\_plots.py]{experiments -> create\_timeseries\_plots.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/experiments/create_timeseries_plots.py"}
+\noindent\subsubsection[main\_get\_latents.py]{experiments -> main\_get\_latents.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/experiments/main_get_latents.py"}
+\noindent\subsection[external]{external} (folder)
+\noindent\subsubsection[tcn]{external -> tcn} (folder)
+\noindent\paragraph[TCN]{external -> tcn -> TCN} (folder)
+\noindent\subparagraph[tcn.py]{external -> tcn -> TCN -> tcn.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/external/tcn/TCN/tcn.py"}
+\noindent\subsubsection[helper\_code.py]{external -> helper\_code.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/external/helper_code.py"}
+\noindent\subsubsection[multi\_scale\_ori.py]{external -> multi\_scale\_ori.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/external/multi_scale_ori.py"}
+\noindent\subsection[jupyter\_notebooks]{jupyter\_notebooks} (folder)
+\noindent\subsubsection[Beat detection.py]{jupyter\_notebooks -> Beat detection.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/jupyter_notebooks/Beat detection.py"}
+\noindent\subsubsection[CPC Loss Implementation Test.py]{jupyter\_notebooks -> CPC Loss Implementation Test.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/jupyter_notebooks/CPC Loss Implementation Test.py"}
+\noindent\subsubsection[CPC Loss.py]{jupyter\_notebooks -> CPC Loss.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/jupyter_notebooks/CPC Loss.py"}
+\noindent\subsubsection[Challenge Data Visualization.py]{jupyter\_notebooks -> Challenge Data Visualization.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/jupyter_notebooks/Challenge Data Visualization.py"}
+\noindent\subsubsection[Export Code.py]{jupyter\_notebooks -> Export Code.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/jupyter_notebooks/Export Code.py"}
+\noindent\subsubsection[Filter Attributes DataFrame.py]{jupyter\_notebooks -> Filter Attributes DataFrame.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/jupyter_notebooks/Filter Attributes DataFrame.py"}
+\noindent\subsubsection[InfoNCE Loss Psuedo.py]{jupyter\_notebooks -> InfoNCE Loss Psuedo.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/jupyter_notebooks/InfoNCE Loss Psuedo.py"}
+\noindent\subsubsection[MIT data.py]{jupyter\_notebooks -> MIT data.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/jupyter_notebooks/MIT data.py"}
+\noindent\subsubsection[Model Gradient-Prediction Scatter.py]{jupyter\_notebooks -> Model Gradient-Prediction Scatter.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/jupyter_notebooks/Model Gradient-Prediction Scatter.py"}
+\noindent\subsubsection[PTB PCA.py]{jupyter\_notebooks -> PTB PCA.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/jupyter_notebooks/PTB PCA.py"}
+\noindent\subsubsection[PTBxl data.py]{jupyter\_notebooks -> PTBxl data.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/jupyter_notebooks/PTBxl data.py"}
+\noindent\subsubsection[Parallel Coordinates.py]{jupyter\_notebooks -> Parallel Coordinates.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/jupyter_notebooks/Parallel Coordinates.py"}
+\noindent\subsubsection[Physionet Hz Converter.py]{jupyter\_notebooks -> Physionet Hz Converter.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/jupyter_notebooks/Physionet Hz Converter.py"}
+\noindent\subsubsection[Precision Recall.py]{jupyter\_notebooks -> Precision Recall.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/jupyter_notebooks/Precision Recall.py"}
+\noindent\subsubsection[ROC.py]{jupyter\_notebooks -> ROC.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/jupyter_notebooks/ROC.py"}
+\noindent\subsubsection[Sinus Generator.py]{jupyter\_notebooks -> Sinus Generator.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/jupyter_notebooks/Sinus Generator.py"}
+\noindent\subsubsection[TSNE.py]{jupyter\_notebooks -> TSNE.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/jupyter_notebooks/TSNE.py"}
+\noindent\subsection[logs]{logs} (folder)
+\noindent\subsection[models\_evaluated\_filtered\_csv]{models\_evaluated\_filtered\_csv} (folder)
+\noindent\subsubsection[old]{models\_evaluated\_filtered\_csv -> old} (folder)
+\noindent\subsection[util]{util} (folder)
+\noindent\subsubsection[data]{util -> data} (folder)
+\noindent\paragraph[clear\_h5\_files.py]{util -> data -> clear\_h5\_files.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/data/clear_h5_files.py"}
+\noindent\paragraph[dataframe\_factory.py]{util -> data -> dataframe\_factory.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/data/dataframe_factory.py"}
+\noindent\paragraph[dataset\_container.py]{util -> data -> dataset\_container.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/data/dataset_container.py"}
+\noindent\paragraph[ecg\_data.py]{util -> data -> ecg\_data.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/data/ecg_data.py"}
+\noindent\paragraph[ecg\_datasets2.py]{util -> data -> ecg\_datasets2.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/data/ecg_datasets2.py"}
+\noindent\paragraph[ecg\_datasets3.py]{util -> data -> ecg\_datasets3.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/data/ecg_datasets3.py"}
+\noindent\paragraph[ptbxl\_data.py]{util -> data -> ptbxl\_data.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/data/ptbxl_data.py"}
+\noindent\subsubsection[metrics]{util -> metrics} (folder)
+\noindent\paragraph[baseline\_losses.py]{util -> metrics -> baseline\_losses.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/metrics/baseline_losses.py"}
+\noindent\paragraph[metrics.py]{util -> metrics -> metrics.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/metrics/metrics.py"}
+\noindent\paragraph[training\_metrics.py]{util -> metrics -> training\_metrics.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/metrics/training_metrics.py"}
+\noindent\subsubsection[utility]{util -> utility} (folder)
+\noindent\paragraph[dict\_utils.py]{util -> utility -> dict\_utils.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/utility/dict_utils.py"}
+\noindent\paragraph[extract\_trained\_model\_attributes.py]{util -> utility -> extract\_trained\_model\_attributes.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/utility/extract_trained_model_attributes.py"}
+\noindent\paragraph[full\_class\_name.py]{util -> utility -> full\_class\_name.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/utility/full_class_name.py"}
+\noindent\paragraph[layer\_calculations.py]{util -> utility -> layer\_calculations.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/utility/layer_calculations.py"}
+\noindent\paragraph[print\_layer.py]{util -> utility -> print\_layer.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/utility/print_layer.py"}
+\noindent\paragraph[sparse\_print.py]{util -> utility -> sparse\_print.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/utility/sparse_print.py"}
+\noindent\paragraph[timestamp.py]{util -> utility -> timestamp.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/utility/timestamp.py"}
+\noindent\subsubsection[visualize]{util -> visualize} (folder)
+\noindent\paragraph[layer\_visualization.py]{util -> visualize -> layer\_visualization.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/visualize/layer_visualization.py"}
+\noindent\paragraph[plot\_metrics.py]{util -> visualize -> plot\_metrics.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/visualize/plot_metrics.py"}
+\noindent\paragraph[timeseries\_to\_image\_converter.py]{util -> visualize -> timeseries\_to\_image\_converter.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/visualize/timeseries_to_image_converter.py"}
+\noindent\subsubsection[store\_models.py]{util -> store\_models.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/util/store_models.py"}
+\noindent\subsection[main\_cpc\_benchmark\_test.py]{main\_cpc\_benchmark\_test.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/main_cpc_benchmark_test.py"}
+\noindent\subsection[main\_cpc\_benchmark\_train.py]{main\_cpc\_benchmark\_train.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/main_cpc_benchmark_train.py"}
+\noindent\subsection[main\_cpc\_explain.py]{main\_cpc\_explain.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/main_cpc_explain.py"}
+\noindent\subsection[main\_cpc\_explain\_gradcam.py]{main\_cpc\_explain\_gradcam.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/main_cpc_explain_gradcam.py"}
+\noindent\subsection[main\_produce\_plots\_for\_tested\_models.py]{main\_produce\_plots\_for\_tested\_models.py} (code)
+\lstinputlisting[language=Python]{"/home/julian/Downloads/Github/contrastive-predictive-coding/main_produce_plots_for_tested_models.py"}
+\end{myparindent}
+\endgroup

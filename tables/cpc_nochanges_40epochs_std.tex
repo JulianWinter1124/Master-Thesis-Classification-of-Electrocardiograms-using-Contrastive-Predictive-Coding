@@ -1,0 +1,17 @@
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{lrrlrlrr}
+{model} & {Freeze CPC} & {strided} & {CPC Sampling Mode} & {Downstream Epochs} & {Downstream Model} & {micro} & {macro} \\
+CPC & False & False & crossentropy & 40.000 & cpc\_downstream\_latent\_average & \bfseries \underline{0.930} & \bfseries \underline{0.842} \\
+CPC & False & False & crossentropy & 40.000 & cpc\_downstream\_latent\_maximum & 0.925 & 0.830 \\
+CPC & False & False & crossentropy & 40.000 & cpc\_downstream\_twolinear\_v2 & 0.911 & 0.830 \\
+CPC & False & True & crossentropy & 40.000 & cpc\_downstream\_latent\_average & 0.905 & 0.768 \\
+CPC & False & True & crossentropy & 40.000 & cpc\_downstream\_latent\_maximum & 0.878 & 0.802 \\
+CPC & False & True & crossentropy & 40.000 & cpc\_downstream\_twolinear\_v2 & 0.915 & 0.801 \\
+CPC & True & False & crossentropy & 40.000 & cpc\_downstream\_latent\_average & 0.923 & 0.824 \\
+CPC & True & False & crossentropy & 40.000 & cpc\_downstream\_latent\_maximum & 0.926 & 0.827 \\
+CPC & True & False & crossentropy & 40.000 & cpc\_downstream\_twolinear\_v2 & 0.929 & 0.838 \\
+CPC & True & True & crossentropy & 40.000 & cpc\_downstream\_latent\_average & 0.908 & 0.772 \\
+CPC & True & True & crossentropy & 40.000 & cpc\_downstream\_latent\_maximum & 0.915 & 0.804 \\
+CPC & True & True & crossentropy & 40.000 & cpc\_downstream\_twolinear\_v2 & 0.917 & 0.801 \\
+\end{tabular}
+\end{adjustbox}

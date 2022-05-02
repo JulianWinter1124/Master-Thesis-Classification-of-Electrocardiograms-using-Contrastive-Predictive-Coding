@@ -1,0 +1,38 @@
+%%% Die folgende Zeile nicht ändern!
+%\section{Abstract}
+%%% Zusammenfassung:
+
+\begin{abstract}
+The following work deals with classifying multilabel electro-cardiographic data using a \enquote{self-supervised} learning method called Contrastive Predictive Coding (short CPC) \autocite{DBLP:journals/corr/abs-1807-03748}, that learns lower dimensional data representations without requiring class labels. These data representations can then be used in classification tasks. Learning from data without labels is potentially very beneficial in fields where correctly labeled data is scarce and only obtainable slowly by human experts.
+
+The goal of this work is to re-implement CPC, apply and test several changes to the architecture and evaluate its capability of classifying ECG-data. We try to answer the following central questions to shine a light on CPC's strengths and weaknesses:
+
+How does the CPC architecture compare against our baseline models in a fully supervised setting? How capable is CPC's pretraining? How good are the learned representations on their own? Under what circumstances is CPC especially efficient to use? Can the original architecture be improved? Does CPC learn visually verifiable useful latent representations?
+%What does CPC excel in? Is CPC always applicable as a pretraining step? Is the general CPC architecture suited for fully supervised training? Are the features extracted by CPC pretraining data descriptive? Does CPC work on heavily augmented data?
+
+We will answer these questions by conducting various experiments that aim to emulate real-life circumstances such as low label availability and limited training times. CPC is compared to fully supervised models, where we make use of architectures like the TCN \autocite{bai2018empirical} and a special time-series classification focused residual net \autocite{yu2016multiscale}, but also introduce a wide variety of own baseline models. 
+
+For evaluation we look at predictions both quantitatively, through different metrics, and qualitatively, by either inspecting embeddings in lower dimensions of the learned representations or by visualizing the prediction probabilities in a wide variety of plots. Additionally we utilize the gradient of selected trained networks to show spots in the input data which possibly contain ECG-classes. 
+
+Our contributions to the field are a more precise explanation of the original publication \autocite{DBLP:journals/corr/abs-1807-03748}, alterations to the one dimensional architecture suited for timeseries classification, namely non overlapping data windows, normalized latent representations, different encoder-, autoregressive context- and downstream-task networks. We also introduce a "no-context" architecture which predict latents without making use of the standard context recurrent network. In total we trained and tested over 1700\footnote{We count individually trained/tested networks, not necessarily different architectures} networks and will also release their model properties and average scores as table for all those interested. 
+
+Last but not least our generated prediction plots and "point of interest"-visualization mainly based on grad-cam \autocite{DBLP:journals/corr/SelvarajuDVCPB16}, show the different models' strengths beyond classification scores and could also assist cardiologists in the future. 
+
+
+%First we start by giving insights about electro-cardiographic data, \enquote{self-supervised} learning methods in general and Contrastive Predictive Coding from the original paper \autocite{DBLP:journals/corr/abs-1807-03748} in closer detail. There we try to supply the reader with further information and possible explanations.
+%
+%Secondly the ECG-data is being looked at in detail, by visualizing the different class label amounts for both the complete data and our training dataset. Moreover the correlation between classes in pairs is shown as well, to get a better understanding of the data and classification problem.
+%
+%Next we re-implement CPC and additionally introduce and apply our modifications to the architecture. Multiple baselines have been implemented for comparison, including but not limited to different multilayered convolutional networks, as well as simple recurrent neural networks or the more recent Temporal Convolutional Network \autocite{bai2018empirical}, which aims to provide an alternative to recurrent architectures in time-series prediction.
+%
+%The work continues by explaining the training settings for the models and how the ECG-data is pre-processed.
+%
+%We conduct experiments to test for various circumstances such as low label availability, amount of parameters, training difficulty/duration and more, to show possible strengths or weaknesses of the architectures.
+%
+%Afterwards we present our detailed results where performance metrics are calculated and compared for all tested models. 
+%
+%Furthermore we visualize the class prediction probabilities per sample as scatter plot or on average in errorbars, in order to provide a more meaningful model output representation apart from scores.
+%
+%As a bonus we try to highlight regions in the input data that are interesting to the model architecture by calculating the gradient w.r.t. to input. There we also compare different models in their capability of producing clear results (TODO: and ask a cardiologist about their opinion. ?)
+
+\end{abstract}

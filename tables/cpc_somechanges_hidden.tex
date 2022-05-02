@@ -1,0 +1,7 @@
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{lrrllrlrr}
+{model} & {Freeze CPC} & {strided} & {CPC Sampling Mode} & {Autoregressive} & {Downstream Epochs} & {Downstream Model} & {micro} & {macro} \\
+CPC & False & False & crossentropy & cpc\_autoregressive\_hidden & 40.000 & cpc\_downstream\_latent\_maximum & \bfseries \underline{0.927} & \bfseries \underline{0.851} \\
+CPC & True & False & crossentropy & cpc\_autoregressive\_hidden & 40.000 & cpc\_downstream\_twolinear\_v2 & 0.885 & 0.797 \\
+\end{tabular}
+\end{adjustbox}

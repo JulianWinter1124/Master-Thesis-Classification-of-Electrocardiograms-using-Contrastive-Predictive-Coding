@@ -1,0 +1,7 @@
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{lrrllrlrr}
+{model} & {Freeze CPC} & {strided} & {CPC Sampling Mode} & {Encoder} & {Downstream Epochs} & {Downstream Model} & {micro} & {macro} \\
+CPC & False & False & crossentropy & cpc\_encoder\_likev8 & 20.000 & cpc\_downstream\_twolinear\_v2 & 0.853 & 0.771 \\
+CPC & True & False & crossentropy & cpc\_encoder\_likev8 & 20.000 & cpc\_downstream\_twolinear\_v2 & \bfseries \underline{0.873} & \bfseries \underline{0.787} \\
+\end{tabular}
+\end{adjustbox}

@@ -1,0 +1,9 @@
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{lrrllrlrr}
+{model} & {Freeze CPC} & {strided} & {CPC Sampling Mode} & {Predictor} & {Downstream Epochs} & {Downstream Model} & {micro} & {macro} \\
+CPC & False & False & crossentropy-nocontext & cpc\_predictor\_nocontext & 20.000 & cpc\_downstream\_twolinear\_v2 & 0.873 & 0.762 \\
+CPC & False & False & crossentropy-nocontext & cpc\_predictor\_nocontext & 40.000 & cpc\_downstream\_latent\_maximum & \bfseries \underline{0.913} & \bfseries \underline{0.831} \\
+CPC & True & False & crossentropy-nocontext & cpc\_predictor\_nocontext & 20.000 & cpc\_downstream\_twolinear\_v2 & 0.881 & 0.764 \\
+CPC & True & False & crossentropy-nocontext & cpc\_predictor\_nocontext & 40.000 & cpc\_downstream\_twolinear\_v2 & 0.911 & 0.803 \\
+\end{tabular}
+\end{adjustbox}
